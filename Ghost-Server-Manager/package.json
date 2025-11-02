@@ -4,8 +4,8 @@
   "description": "",
   "main": "out/index.js",
   "scripts": {
-    "start": "cd frontend && flutter build web --release && cd .. && tsc && node --env-file-if-exists=.env out/index.js",
-    "server": "tsc && node --env-file-if-exists=.env out/index.js"
+    "start": "cd frontend && flutter build web --release && cd .. && tsc && node --env-file-if-exists=./frontend/.env out/index.js",
+    "server": "tsc && node --env-file-if-exists=./frontend/.env out/index.js"
   },
   "keywords": [],
   "author": "",

@@ -21,7 +21,12 @@ An official version of the website can be found at [ghost.portal2.sr](https://gh
 
 1. Go into `/Ghost-Server-Manager`
 2. Create the files `users.db` and `containers.db` in `./db/`
-3. Go into `./frontend/backend/backend.dart` and change the `_host` and optionally the `_baseUri` constants to reflect your server's host and protocol.
+3. Fill the `./frontend/.env` file with the following keys:
+```sh
+SERVER_PORT=<port the server should listen on>
+PROTOCOL="<server protocol (http/https)>"
+HOST="<hostname of the server>"
+```
 4. Run `npm install`
 5. Run `npm start`. This will build the Flutter app and run the server.
 
@@ -35,13 +40,12 @@ That's it! You can now access the website at \<hostname\>:<port (default 8080)>
 #### Discord OAuth2
 
 The Ghost-Server-Manager supports using Discord OAuth2 for user authentication. To configure Discord OAuth2, create an application on the 
-[Discord Developer Portal](https://discord.com/developers/applications) and populate the `/Ghost-Server-Manager/.env` file with the following
-content:
+[Discord Developer Portal](https://discord.com/developers/applications) and add the following to the  `/Ghost-Server-Manager/frontend/.env`
+file:
 
 ```sh
 DISCORD_CLIENT_ID="<client ID>"
 DISCORD_CLIENT_SECRET="<client secret>"
-DISCORD_REDIRECT_URI="<host>/finish_discord_login" # (e.g. 'https://example.com/finish_discord_login)
 ```
 
 The redirect URI needs to be registered in the applications settings!

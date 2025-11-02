@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:portal2_ghost_sever_hoster/main.dart';
@@ -10,12 +11,19 @@ part 'backend.freezed.dart';
 
 part 'backend.g.dart';
 
-const _host = "localhost";
-const _baseUri = "http://$_host:8080";
-const _baseAuthUri = "$_baseUri/api/auth";
-const _baseServerUri = "$_baseUri/api/server";
+String get _host => dotenv.env["HOST"]!;
 
-const kSupportsDiscordAuth = false;
+String get _port => dotenv.env["SERVER_PORT"]!;
+
+String get _protocol => dotenv.env["PROTOCOL"]!;
+
+String get _baseUri => "$_protocol://$_host:$_port";
+
+String get _baseAuthUri => "$_baseUri/api/auth";
+
+String get _baseServerUri => "$_baseUri/api/server";
+
+bool get kSupportsDiscordAuth => dotenv.env.containsKey("DISCORD_CLIENT_ID");
 
 typedef Json = Map<String, dynamic>;
 

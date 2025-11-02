@@ -26,4 +26,4 @@ app.get("*", (req, res) => {
 
 init().catch((_) => {});
 
-app.listen(8080, () => { console.log("Server listening on port 8080"); });
+app.listen(+process.env.SERVER_PORT || 8080, () => { console.log("Server listening on port 8080"); });

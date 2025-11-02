@@ -15,7 +15,7 @@ const dbPath = join(__dirname, "../../db/users.db");
 var db: Database | undefined;
 
 export const SUPPORTS_DISCORD_AUTH = "DISCORD_CLIENT_ID" in process.env;
-const DISCORD_OAUTH2_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || "";
+const DISCORD_OAUTH2_REDIRECT_URI = `${process.env.PROTOCOL}://${process.env.HOST}:${process.env.SERVER_PORT}/finish_discord_login`;
 
 const discordOauth2Client = new AuthorizationCode({
 	client: {

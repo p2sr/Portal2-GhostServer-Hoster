@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_sever_hoster/pages/auth/finish_discord_login_page.dart';
@@ -10,8 +11,10 @@ import 'package:portal2_ghost_sever_hoster/pages/webinterface/webinterface_page.
 const spAuthTokenKey = "auth_token";
 const spAuthTokenExpiryKey = "auth_token_expiry";
 
-void main() {
+Future<void> main() async {
   usePathUrlStrategy();
+
+  await dotenv.load();
 
   runApp(
     MaterialApp.router(
