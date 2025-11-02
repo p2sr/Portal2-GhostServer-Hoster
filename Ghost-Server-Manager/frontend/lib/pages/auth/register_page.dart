@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_sever_hoster/backend/backend.dart';
 
+import 'login_page.dart';
+
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -106,6 +108,14 @@ class _RegisterPageState extends State<RegisterPage> {
                   onPressed: register,
                   child: const Text("Register"),
                 ),
+                if (kSupportsDiscordAuth) ...[
+                  const SizedBox(height: 20),
+                  FilledButton.tonalIcon(
+                    onPressed: loginWithDiscord,
+                    icon: const Icon(Icons.discord),
+                    label: const Text("Login with Discord"),
+                  ),
+                ],
               ],
             ),
           ),

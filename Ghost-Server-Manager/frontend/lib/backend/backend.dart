@@ -15,6 +15,8 @@ const _baseUri = "http://$_host:8080";
 const _baseAuthUri = "$_baseUri/api/auth";
 const _baseServerUri = "$_baseUri/api/server";
 
+const kSupportsDiscordAuth = false;
+
 typedef Json = Map<String, dynamic>;
 
 @JsonEnum()
@@ -158,10 +160,26 @@ class _Backend {
     body: jsonEncode(body),
   );
 
+  Future<String> getDiscordOauth2Url() =>
+      _get("$_baseAuthUri/discordOauth2Url").then((r) => r.body);
+
   Future<(String, DateTime)> login(String email, String password) async {
     var response = await _postJson(
       "$_baseAuthUri/login",
       body: {"email": email, "password": password},
+    );
+    if (response.statusCode != 200) throw response.body;
+    var json = jsonDecode(response.body);
+    return (
+      json["token"] as String,
+      DateTime.fromMillisecondsSinceEpoch(json["expires"]),
+    );
+  }
+
+  Future<(String, DateTime)> finishDiscordOauth2Login(String authCode) async {
+    var response = await _postJson(
+      "$_baseAuthUri/finishDiscordOauth2Login",
+      body: {"code": authCode},
     );
     if (response.statusCode != 200) throw response.body;
     var json = jsonDecode(response.body);

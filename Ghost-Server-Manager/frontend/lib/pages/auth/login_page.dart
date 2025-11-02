@@ -4,6 +4,18 @@ import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_sever_hoster/backend/backend.dart';
 import 'package:portal2_ghost_sever_hoster/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web/web.dart' as html;
+
+Future<void> loginWithDiscord() async {
+  var url = await Backend.getDiscordOauth2Url();
+  html.window.open(url, '_self');
+}
+
+Future<void> saveAccessToken(String token, DateTime expiry) async {
+  var sp = await SharedPreferences.getInstance();
+  sp.setString(spAuthTokenKey, token);
+  sp.setInt(spAuthTokenExpiryKey, expiry.millisecondsSinceEpoch);
+}
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,10 +35,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       var (token, expiry) = await Backend.login(email, password);
-
-      var sp = await SharedPreferences.getInstance();
-      sp.setString(spAuthTokenKey, token);
-      sp.setInt(spAuthTokenExpiryKey, expiry.millisecondsSinceEpoch);
+      await saveAccessToken(token, expiry);
 
       if (!mounted) return;
       context.go("/");
@@ -93,6 +102,14 @@ class _LoginPageState extends State<LoginPage> {
                   onPressed: login,
                   child: const Text("Login"),
                 ),
+                if (kSupportsDiscordAuth) ...[
+                  const SizedBox(height: 20),
+                  FilledButton.tonalIcon(
+                    onPressed: loginWithDiscord,
+                    icon: const Icon(Icons.discord),
+                    label: const Text("Login with Discord"),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () => context.go("/login/register"),

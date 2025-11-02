@@ -22,17 +22,8 @@ An official version of the website can be found at [ghost.portal2.sr](https://gh
 1. Go into `/Ghost-Server-Manager`
 2. Create the files `users.db` and `containers.db` in `./db/`
 3. Go into `./frontend/backend/backend.dart` and change the `_host` and optionally the `_baseUri` constants to reflect your server's host and protocol.
-4. Go into `./res/` and create a file called `mail_account.json`. That is the email configuration used by the email-client, which sends you for
-example password reset emails. Fill it according to the following scheme:
-```
-{
-    "service": "your-service (e.g. gmail)",
-    "user": "your-email",
-    "password": "your-password"
-}
-```
-6. Run `npm install`
-7. Run `npm start`. This will build the Flutter app and run the server.
+4. Run `npm install`
+5. Run `npm start`. This will build the Flutter app and run the server.
 
 Leave the Ghost-Server-Manager running in the background. It will serve the website and provide the API backend for it.
 
@@ -40,6 +31,22 @@ After a few seconds the server will start on port 8080 ("Server listening on por
 If you want to change that port, go into `/Ghost-Server-Manager/src/index.ts` and change the port in the last line of the file.
 
 That's it! You can now access the website at \<hostname\>:<port (default 8080)>
+
+#### Discord OAuth2
+
+The Ghost-Server-Manager supports using Discord OAuth2 for user authentication. To configure Discord OAuth2, create an application on the 
+[Discord Developer Portal](https://discord.com/developers/applications) and populate the `/Ghost-Server-Manager/.env` file with the following
+content:
+
+```sh
+DISCORD_CLIENT_ID="<client ID>"
+DISCORD_CLIENT_SECRET="<client secret>"
+DISCORD_REDIRECT_URI="<host>/finish_discord_login" # (e.g. 'https://example.com/finish_discord_login)
+```
+
+The redirect URI needs to be registered in the applications settings!
+
+Then, go into `/Ghost-Server-Manager/frontend/backend/backend.dart` and set the variable `kSupportsDiscordAuth` to `true`.
 
 ## Contributing
 

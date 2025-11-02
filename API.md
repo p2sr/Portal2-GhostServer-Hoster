@@ -58,6 +58,42 @@ Response body:
 }
 ```
 
+### `/discordOauth2Url`
+
+- Returns the URL to redirect the user to for authentication with Discord OAuth2.
+- Authentication: No
+- Method: GET
+
+#### Response
+
+Status code 200 on success. The request body contains the URL to redirect the user to.
+
+### `/finishDiscordOauth2Login`
+
+- Finishes logging a user in with Discord OAuth2.
+- Authentication: No
+- Method: GET
+
+#### Request body
+
+```json
+{
+    "code": "<auth code returned by Discord>"
+}
+```
+
+#### Response
+
+Status code `200` on success.
+
+Response body:
+```json
+{
+    "token": "<auth token>",
+    "expires": <unix timestamp in milliseconds indicating when the token expires>
+}
+```
+
 ### `/user`
 
 - Returns the currently logged in user.

@@ -32,8 +32,8 @@ router.post("/register", async (req, res) => {
 	const email = req.body.email.toString();
 	const password = req.body.password.toString();
 
-	const successful = await db.createUser(email, password);
-	if (!successful) {
+	const user = await db.createUser(email, password);
+	if (!user) {
 		logger.warn({ source: "register", message: "The user already exists" });
 		res.status(409).send();
 		return;
@@ -59,7 +59,7 @@ router.post("/login", async (req, res) => {
 	const email = req.body.email.toString();
 	const password = req.body.password.toString();
 
-	const result = await db.generateAuthToken(email, password);
+	const result = await db.checkCredentialsAndGenerateAuthToken(email, password);
 	if (!result) {
 		logger.warn({ source: "login", message: "User not found." });
 		res.status(404).send("User not found");
@@ -69,6 +69,27 @@ router.post("/login", async (req, res) => {
 	const [authToken, expirationDate] = result;
 	res.status(200).json({ "token": authToken, "expires": expirationDate.getTime() })
 });
+
+if (db.SUPPORTS_DISCORD_AUTH) {
+	router.get("/discordOauth2Url", (req, res) => {
+		res.status(200).send(db.getDiscordOauth2Url());
+	});
+
+	router.post("/finishDiscordOauth2Login", async (req, res) => {
+		if (!("code" in req.body)) {
+			res.status(400).send("Expected auth code");
+			return;
+		}
+
+		try {
+			const [authToken, expirationDate] = await db.finishDiscordOauth2Login(req.body.code);
+			res.status(200).json({ "token": authToken, "expires": expirationDate.getTime() });
+		} catch (error) {
+			logger.error({ source: "finishDiscordOauth2Login", message: `Failed getting access token: ${error.message}` });
+			res.status(500).send("Failed logging in with Discord");
+		}
+	});
+}
 
 router.get("/user", authMiddleware, (req, res) => {
 	res.status(200).json(req.body.user);

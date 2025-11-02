@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:go_router/go_router.dart';
+import 'package:portal2_ghost_sever_hoster/pages/auth/finish_discord_login_page.dart';
 import 'package:portal2_ghost_sever_hoster/pages/auth/login_page.dart';
 import 'package:portal2_ghost_sever_hoster/pages/auth/register_page.dart';
 import 'package:portal2_ghost_sever_hoster/pages/home_page.dart';
@@ -45,6 +46,11 @@ void main() {
                 builder: (context, state) => const RegisterPage(),
               ),
             ],
+          ),
+          GoRoute(
+            path: '/finish_discord_login',
+            builder: (context, state) =>
+                FinishDiscordLoginPage(code: state.uri.queryParameters["code"]),
           ),
         ],
       ),

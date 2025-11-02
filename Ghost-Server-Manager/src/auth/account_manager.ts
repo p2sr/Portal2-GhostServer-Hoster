@@ -5,12 +5,78 @@ import { randomBytes } from "crypto";
 import { addDays, addHours } from "date-fns";
 import bcrypt from "bcrypt";
 import { logger } from "../util/logger";
+import { AuthorizationCode } from "simple-oauth2";
+import axios from "axios";
 
 const AUTH_TOKEN_DURATION_DAYS = 300;
 
 const dbPath = join(__dirname, "../../db/users.db");
 
 var db: Database | undefined;
+
+export const SUPPORTS_DISCORD_AUTH = "DISCORD_CLIENT_ID" in process.env;
+const DISCORD_OAUTH2_REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || "";
+
+const discordOauth2Client = new AuthorizationCode({
+	client: {
+		id: process.env.DISCORD_CLIENT_ID || "",
+		secret: process.env.DISCORD_CLIENT_SECRET || "",
+	},
+	auth: {
+		tokenHost: "https://discord.com",
+		authorizePath: "/oauth2/authorize",
+		tokenPath: "/api/oauth2/token",
+		revokePath: "/api/oauth2/token/revoke",
+	},
+});
+
+export function getDiscordOauth2Url() {
+	return discordOauth2Client.authorizeURL({
+		scope: ["openid", "email"],
+		redirect_uri: DISCORD_OAUTH2_REDIRECT_URI,
+	});
+}
+
+export async function finishDiscordOauth2Login(authCode: string): Promise<[string, Date]> {
+	const accessToken = await discordOauth2Client.getToken(
+		{
+			code: authCode,
+			redirect_uri: DISCORD_OAUTH2_REDIRECT_URI,
+		},
+		// Discord apparently doesn't set the Content-Type header correctly for JSON
+		{ json: "force" },
+	);
+
+	const discordUser = await axios.get(
+		"https://discord.com/api/users/@me",
+		{
+			headers: { "Authorization": `Bearer ${accessToken.token.access_token}` }
+		},
+	);
+
+	const email = discordUser.data["email"];
+
+	var user = await getUserByEmail(email);
+	if (user === undefined) {
+		user = await createUser(email, undefined);
+	}
+
+	if (user !== undefined) {
+		const existingAccessToken = await getAuthProviderAccessTokenJson(user.id, AuthProvider.Discord);
+		if (existingAccessToken === undefined) {
+			await registerAuthProvider(user.id, AuthProvider.Discord, JSON.stringify(accessToken));
+		} else {
+			discordOauth2Client.createToken(JSON.parse(existingAccessToken)).revokeAll();
+			await updateAuthProviderAccessTokenJson(user.id, AuthProvider.Discord, JSON.stringify(accessToken));
+		}
+	}
+
+	return await generateAuthToken(user.id);
+}
+
+export enum AuthProvider {
+	Discord = "discord",
+}
 
 export enum Role {
 	User = "user",
@@ -49,6 +115,13 @@ export async function openDatabase() {
 	}
 	catch { }
 
+	await db.run(`CREATE TABLE IF NOT EXISTS auth_provider (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        provider TEXT NOT NULL,
+		access_token_json TEXT
+    );`);
+
 	await db.run(`CREATE TABLE IF NOT EXISTS auth_tokens (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         user_id INTEGER NOT NULL, 
@@ -70,23 +143,45 @@ export async function closeDatabase() {
 	db = undefined;
 }
 
-export async function createUser(email: string, password: string): Promise<boolean> {
+export async function createUser(email: string, password: string | undefined): Promise<User | undefined> {
 	if (!db) {
 		logger.error({ source: "createUser", message: "Database not open!" });
-		return false;
+		return undefined;
 	}
 
 	const row = await db.get(`SELECT * FROM users WHERE email = ?`, [email]);
-	if (row) return false;
+	if (row) return undefined;
 
-	const passwordHash = await getPasswordHash(password);
-	await db.run(`INSERT INTO users (email, passwordHash) VALUES (?, ?);`, [email, passwordHash]);
+	const passwordHash = password !== undefined ? await getPasswordHash(password) : "";
+	const newUser = await db.get("INSERT INTO users (email, passwordHash) VALUES (?, ?) RETURNING *", [email, passwordHash]);
 
-	return true;
+	return User.fromRow(newUser);
 }
 
-/// Returns the auth token and its expiration date.
-export async function generateAuthToken(email: string, password: string): Promise<[string, Date] | undefined> {
+export async function getAuthProviderAccessTokenJson(userId: number, provider: AuthProvider): Promise<string | undefined> {
+	if (!db) return undefined;
+
+	const row = await db.get("SELECT access_token_json FROM auth_provider WHERE user_id = ? AND provider = ?", [userId, provider.toString()]);
+	if (!row) return undefined;
+
+	return row.access_token_json;
+}
+
+export async function registerAuthProvider(userId: number, provider: AuthProvider, accessTokenJson: string) {
+	if (!db) return;
+
+	const user = await db.get("SELECT id FROM users WHERE id = ?", [userId]);
+	if (!user) return;
+
+	await db.run("INSERT INTO auth_provider (user_id, provider, access_token_json) VALUES (?, ?, ?)", [userId, provider.toString(), accessTokenJson]);
+}
+
+export async function updateAuthProviderAccessTokenJson(userId: number, provider: AuthProvider, accessTokenJson: string) {
+	if (!db) return;
+	await db.run("UPDATE auth_provider SET access_token_json = ? WHERE user_id = ? AND provider = ?", [accessTokenJson, userId, provider.toString()]);
+}
+
+export async function checkCredentialsAndGenerateAuthToken(email: string, password: string): Promise<[string, Date] | undefined> {
 	if (!db) {
 		logger.error({ source: "generateAuthToken", message: "Database not open!" });
 		return;
@@ -104,12 +199,34 @@ export async function generateAuthToken(email: string, password: string): Promis
 		return;
 	}
 
+	return generateAuthToken(row.id);
+}
+
+/// Returns the auth token and its expiration date.
+export async function generateAuthToken(userId: number): Promise<[string, Date] | undefined> {
+	if (!db) {
+		logger.error({ source: "generateAuthToken", message: "Database not open!" });
+		return;
+	}
+
 	const authToken = randomBytes(30).toString('hex');
 	// Hint: Parse expirationDate with new Date(expirationDate) :^)
 	const expirationDate = addDays(Date.now(), AUTH_TOKEN_DURATION_DAYS);
-	await db.run("INSERT INTO auth_tokens (user_id, token, expirationDate) VALUES (?, ?, ?);", [row.id, authToken, expirationDate.getTime()]);
+	await db.run("INSERT INTO auth_tokens (user_id, token, expirationDate) VALUES (?, ?, ?);", [userId, authToken, expirationDate.getTime()]);
 
 	return [authToken, expirationDate];
+}
+
+export async function getUserByEmail(email: string): Promise<User | undefined> {
+	if (!db) {
+		logger.error({ source: "getUser", message: "Database not open!" });
+		return;
+	}
+
+	const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
+	if (!user) return;
+
+	return User.fromRow(user);
 }
 
 export async function getUser(authToken: string): Promise<User | undefined> {
