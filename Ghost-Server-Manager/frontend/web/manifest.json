@@ -1,6 +1,6 @@
 {
-    "name": "portal2_ghost_sever_hoster",
-    "short_name": "portal2_ghost_sever_hoster",
+    "name": "portal2_ghost_server_hoster",
+    "short_name": "portal2_ghost_server_hoster",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,4 +1,4 @@
-# portal2_ghost_sever_hoster
+# portal2_ghost_server_hoster
 
 A new Flutter project.
 

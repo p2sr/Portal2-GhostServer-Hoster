@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:portal2_ghost_sever_hoster/backend/backend.dart';
-import 'package:portal2_ghost_sever_hoster/pages/auth/login_page.dart';
+import 'package:portal2_ghost_server_hoster/backend/backend.dart';
+import 'package:portal2_ghost_server_hoster/pages/auth/login_page.dart';
 import 'package:after_layout/after_layout.dart';
 
 class FinishDiscordLoginPage extends StatefulWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:portal2_ghost_sever_hoster/backend/backend.dart';
+import 'package:portal2_ghost_server_hoster/backend/backend.dart';
 
 class PlayersTab extends StatefulWidget {
   const PlayersTab({

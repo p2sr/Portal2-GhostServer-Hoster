@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:http/http.dart' as http;
-import 'package:portal2_ghost_sever_hoster/main.dart';
+import 'package:portal2_ghost_server_hoster/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'backend.freezed.dart';

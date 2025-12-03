@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:portal2_ghost_sever_hoster/backend/backend.dart';
-import 'package:portal2_ghost_sever_hoster/pages/home_page.dart';
-import 'package:portal2_ghost_sever_hoster/pages/webinterface/players_tab.dart';
+import 'package:portal2_ghost_server_hoster/backend/backend.dart';
+import 'package:portal2_ghost_server_hoster/pages/home_page.dart';
+import 'package:portal2_ghost_server_hoster/pages/webinterface/players_tab.dart';
 
 class WebinterfacePage extends StatefulWidget {
   const WebinterfacePage({super.key, required this.serverId});

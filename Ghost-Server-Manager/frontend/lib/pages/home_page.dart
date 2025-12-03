@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:portal2_ghost_sever_hoster/backend/backend.dart';
-import 'package:portal2_ghost_sever_hoster/main.dart';
+import 'package:portal2_ghost_server_hoster/backend/backend.dart';
+import 'package:portal2_ghost_server_hoster/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
