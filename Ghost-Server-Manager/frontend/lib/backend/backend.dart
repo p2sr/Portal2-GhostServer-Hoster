@@ -11,11 +11,18 @@ part 'backend.freezed.dart';
 
 part 'backend.g.dart';
 
-String get _host => dotenv.env["HOST"] ?? "localhost";
+// Prefer compile-time values provided with `--dart-define` and fall back
+// to values from `flutter_dotenv` (useful for local/dev when dotenv is available).
+const _hostBuild = String.fromEnvironment('HOST', defaultValue: '');
+const _portBuild = String.fromEnvironment('SERVER_PORT', defaultValue: '');
+const _protocolBuild = String.fromEnvironment('PROTOCOL', defaultValue: '');
+const _discordClientIdBuild = String.fromEnvironment('DISCORD_CLIENT_ID', defaultValue: '');
 
-String get _port => dotenv.env["SERVER_PORT"] ?? "8080";
+String get _host =>_hostBuild.isNotEmpty ? _hostBuild : dotenv.env["HOST"] ?? 'localhost';
 
-String get _protocol => dotenv.env["PROTOCOL"] ?? "http";
+String get _port => _portBuild.isNotEmpty ? _portBuild : dotenv.env["SERVER_PORT"] ?? '8080';
+
+String get _protocol => _protocolBuild.isNotEmpty ? _protocolBuild : dotenv.env["PROTOCOL"] ?? 'http';
 
 String get _baseUri => "$_protocol://$_host:$_port";
 
@@ -23,7 +30,7 @@ String get _baseAuthUri => "$_baseUri/api/auth";
 
 String get _baseServerUri => "$_baseUri/api/server";
 
-bool get kSupportsDiscordAuth => dotenv.env.containsKey("DISCORD_CLIENT_ID");
+bool get kSupportsDiscordAuth => _discordClientIdBuild.isNotEmpty || dotenv.env.containsKey("DISCORD_CLIENT_ID");
 
 typedef Json = Map<String, dynamic>;
 

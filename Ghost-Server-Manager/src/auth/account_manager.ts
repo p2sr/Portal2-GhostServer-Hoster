@@ -15,7 +15,15 @@ const dbPath = join(__dirname, "../../db/users.db");
 var db: Database | undefined;
 
 export const SUPPORTS_DISCORD_AUTH = "DISCORD_CLIENT_ID" in process.env;
-const DISCORD_OAUTH2_REDIRECT_URI = `${process.env.PROTOCOL || "http"}://${process.env.HOST || "localhost"}:${process.env.SERVER_PORT || "8080"}/finish_discord_login`;
+const DISCORD_OAUTH2_REDIRECT_URI = (() => {
+	// Do some fanciness to make sure the default port isn't included
+	let protocol = process.env.PROTOCOL || "http";
+	let port = process.env.SERVER_PORT || "8080";
+	if (protocol === "http" && port === "80") port = "";
+	if (protocol === "https" && port === "443") port = "";
+	if (port !== "") port = `:${port}`;
+	return `${protocol}://${process.env.HOST || "localhost"}${port}/finish_discord_login`;
+})();
 
 const discordOauth2Client = new AuthorizationCode({
 	client: {
@@ -32,7 +40,7 @@ const discordOauth2Client = new AuthorizationCode({
 
 export function getDiscordOauth2Url() {
 	return discordOauth2Client.authorizeURL({
-		scope: ["openid", "email"],
+		scope: ["identify", "email"],
 		redirect_uri: DISCORD_OAUTH2_REDIRECT_URI,
 	});
 }

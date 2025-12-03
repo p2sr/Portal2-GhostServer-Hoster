@@ -55,10 +55,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboardType: TextInputType.emailAddress,
                   validator: (email) {
                     if (email == null || email.isEmpty) {
-                      return "Please provide an Email address.";
+                      return "Please provide an email address.";
                     }
                     if (!EmailValidator.validate(email)) {
-                      return "Please provide a valid Email address!";
+                      return "Please provide a valid email address!";
                     }
 
                     return null;

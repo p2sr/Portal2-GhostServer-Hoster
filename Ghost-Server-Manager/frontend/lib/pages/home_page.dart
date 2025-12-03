@@ -202,10 +202,10 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               keyboardType: TextInputType.emailAddress,
               validator: (s) {
                 if (s == null || s.isEmpty) {
-                  return "Please enter your Email-Address.";
+                  return "Please enter your email address.";
                 }
                 if (s != widget.currentUser.email) {
-                  return "Email-Address is incorrect.";
+                  return "Email address is incorrect.";
                 }
                 return null;
               },

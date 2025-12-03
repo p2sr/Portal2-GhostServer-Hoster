@@ -32,6 +32,7 @@ const port = +process.env.SERVER_PORT || 8080;
 if (process.env.PROTOCOL === "https") {
     const ssl_key = process.env.SSL_KEY || "key.pem";
     const ssl_cert = process.env.SSL_CERT || "cert.pem";
+    const host = process.env.HOST || "localhost";
     if (!fs.existsSync(ssl_key) || !fs.existsSync(ssl_cert)) {
         console.error("SSL key or certificate file not found! Cannot start HTTPS server.");
         process.exit(1);
@@ -45,7 +46,7 @@ if (process.env.PROTOCOL === "https") {
     if (port !== 80) {
         var http = express();
         http.get('*', function(req, res) {
-            res.redirect(`https://${process.env.HOST || "localhost"}:${port}${req.url}`);
+            res.redirect(`https://${host}:${port}${req.url}`);
         });
         http.listen(80, () => { console.log('HTTP Server listening on port 80 for upgrade to HTTPS'); });
     }
