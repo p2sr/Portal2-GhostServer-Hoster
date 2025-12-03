@@ -72,6 +72,8 @@ export async function createContainer(id: string, port: number, wsPort: number, 
 	// Delete container after expiration date
 	scheduleJob(expirationDate, async () => {
 		if (!db) await openDatabase();
+		// check if container already manually stopped
+		if (!(await db.get("SELECT * FROM containers WHERE container_id = ?", [id]))) return;
 		await docker.stopContainer(port);
 	});
 }
