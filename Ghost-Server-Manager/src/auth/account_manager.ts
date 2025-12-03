@@ -272,7 +272,7 @@ export async function generatePasswordResetToken(email: string): Promise<string 
 
 	const token = randomBytes(30).toString('hex');
 	const expirationDate = addHours(Date.now(), 5).getTime();
-	await db.exec(`INSERT INTO password_reset_tokens (user_id, token, expirationDate) VALUES (${userRow.id}, '${token}', ${expirationDate});`);
+	await db.run(`INSERT INTO password_reset_tokens (user_id, token, expirationDate) VALUES (?, ?, ?)`, [userRow.id, token, expirationDate]);
 
 	return token;
 }

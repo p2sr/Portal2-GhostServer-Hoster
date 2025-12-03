@@ -66,14 +66,8 @@ export async function createContainer(id: string, port: number, wsPort: number, 
 	const expirationDate = addHours(Date.now(), 5);
 	await db.run(`INSERT INTO containers 
 		(container_id, port, ws_port, user_id, name, expirationDate) 
-		VALUES (
-			'${id}',
-			'${port}', 
-			'${wsPort}', 
-			${userId}, 
-			'${name}',
-			${expirationDate.getTime()}
-		);`);
+		VALUES (?, ?, ?, ?, ?, ?);`,
+		[id, port, wsPort, userId, name, expirationDate.getTime()]);
 
 	// Delete container after expiration date
 	scheduleJob(expirationDate, async () => {
