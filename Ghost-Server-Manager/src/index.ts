@@ -6,6 +6,8 @@ import path from "path";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { init } from "./util/mailer";
+import https from "https";
+import fs from "fs";
 
 const app = express();
 
@@ -26,5 +28,27 @@ app.get("*", (req, res) => {
 
 init().catch((_) => {});
 
-const port = process.env.SERVER_PORT || 8080;
-app.listen(+port, () => { console.log(`Server listening on port ${port}`); });
+const port = +process.env.SERVER_PORT || 8080;
+if (process.env.PROTOCOL === "https") {
+    const ssl_key = process.env.SSL_KEY || "key.pem";
+    const ssl_cert = process.env.SSL_CERT || "cert.pem";
+    if (!fs.existsSync(ssl_key) || !fs.existsSync(ssl_cert)) {
+        console.error("SSL key or certificate file not found! Cannot start HTTPS server.");
+        process.exit(1);
+    }
+    https.createServer({
+        key: fs.readFileSync(ssl_key),
+        cert: fs.readFileSync(ssl_cert),
+    }, app).listen(port, () => { console.log(`HTTPS Server listening on port ${port}`); });
+
+    // HTTP upgrade
+    if (port !== 80) {
+        var http = express();
+        http.get('*', function(req, res) {
+            res.redirect(`https://${process.env.HOST || "localhost"}:${port}${req.url}`);
+        });
+        http.listen(80, () => { console.log('HTTP Server listening on port 80 for upgrade to HTTPS'); });
+    }
+} else {
+    app.listen(port, () => { console.log(`HTTP Server listening on port ${port}`); });
+}

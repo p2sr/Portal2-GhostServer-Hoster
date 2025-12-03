@@ -28,6 +28,10 @@ An official version of the website can be found at [ghost.portal2.sr](https://gh
     SERVER_PORT="<port the server should listen on>"
     PROTOCOL="<server protocol (http/https)>"
     HOST="<hostname of the server>"
+    SSL_KEY="<(optional) path to SSL key file (https)>"
+    SSL_CERT="<(optional) path to SSL certificate file (https)>"
+    DISCORD_CLIENT_ID="<(optional) discord oauth application client ID>"
+    DISCORD_CLIENT_SECRET="<(optional) discord oauth application client secret>"
     ```
 
 4. (Optional) Set mailer credentials in `./res/mail-account.json`:
@@ -51,14 +55,9 @@ That's it! You can now access the website at \<hostname\>:<port (default 8080)>
 
 #### Discord OAuth2
 
-The Ghost-Server-Manager supports using Discord OAuth2 for user authentication. To configure Discord OAuth2, create an application on the [Discord Developer Portal](https://discord.com/developers/applications) and add the following to the `/Ghost-Server-Manager/frontend/.env` file:
+The Ghost-Server-Manager supports using Discord OAuth2 for user authentication. To configure Discord OAuth2, create an application on the [Discord Developer Portal](https://discord.com/developers/applications) and add the relevant keys to `/Ghost-Server-Manager/frontend/.env` seen above.
 
-```sh
-DISCORD_CLIENT_ID="<client ID>"
-DISCORD_CLIENT_SECRET="<client secret>"
-```
-
-The redirect URI needs to be registered in the applications settings!
+The redirect URI needs to be registered in the application's settings!
 
 ## Contributing
 

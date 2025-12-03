@@ -11,11 +11,11 @@ part 'backend.freezed.dart';
 
 part 'backend.g.dart';
 
-String get _host => dotenv.env["HOST"]!;
+String get _host => dotenv.env["HOST"] ?? "localhost";
 
-String get _port => dotenv.env["SERVER_PORT"]!;
+String get _port => dotenv.env["SERVER_PORT"] ?? "8080";
 
-String get _protocol => dotenv.env["PROTOCOL"]!;
+String get _protocol => dotenv.env["PROTOCOL"] ?? "http";
 
 String get _baseUri => "$_protocol://$_host:$_port";
 
