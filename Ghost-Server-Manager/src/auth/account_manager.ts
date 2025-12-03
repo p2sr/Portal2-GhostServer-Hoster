@@ -243,8 +243,7 @@ export async function getUser(authToken: string): Promise<User | undefined> {
 		return;
 	}
 
-	// Delete expired authTokens
-	await db.run("DELETE FROM auth_tokens WHERE expirationDate < ?", [Date.now()]);
+	await deleteExpiredAuthTokens();
 
 	const authTokenRow = await db.get("SELECT * FROM auth_tokens WHERE token = ?", [authToken]);
 	if (!authTokenRow) return;
@@ -319,7 +318,11 @@ export async function resetPassword(token: string, email: string, newPassword: s
 }
 
 function deleteExpiredPasswordResetTokens() {
-	return db.run("DELETE FROM password_reset_tokens WHERE expirationDate < ?", [Date.now()]);
+	return db?.run("DELETE FROM password_reset_tokens WHERE expirationDate < ?", [Date.now()]);
+}
+
+function deleteExpiredAuthTokens() {
+	return db?.run("DELETE FROM auth_tokens WHERE expirationDate < ?", [Date.now()]);
 }
 
 function getPasswordHash(password: string): Promise<string> {
