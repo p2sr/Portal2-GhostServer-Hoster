@@ -5,7 +5,7 @@ RUN \
     apt-get update && \
     apt-get install -y libsfml-dev g++ make curl nginx build-essential pkg-config python3 python3-setuptools
     
-# Install Nodejs
+# Install Node.js
 RUN \
 	curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
     apt-get -y install nodejs && \

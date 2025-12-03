@@ -125,7 +125,7 @@ router.get("/sendResetPassword", async (req, res) => {
 	try {
 		const html = readFileSync(join(__dirname, "../../res/reset-password_email.html"))
 			.toString()
-			.replace(/({host})/g, `${req.protocol}://${req.hostname}:8080`) // aka replaceAll
+			.replace(/({host})/g, `${req.protocol}://${req.hostname}:${req.socket.localPort}`) // aka replaceAll
 			.replace("{token}", token)
 			.replace("{email}", email);
 

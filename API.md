@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD024 -->
+
 # Portal2-GhostServer-Hoster API
 
 The following are the API routes exposed by the Ghost-Server-Manager.
@@ -17,7 +19,7 @@ See `/api/auth/login` route for how to obtain an auth token.
 - Authentication: No
 - Method: POST
 
-#### Request body:
+#### Request body
 
 ```json
 {
@@ -51,6 +53,7 @@ to call `/login` to receive an auth token.
 Status code `200` on success.
 
 Response body:
+
 ```json
 {
     "token": "<auth token>",
@@ -87,6 +90,7 @@ Status code 200 on success. The request body contains the URL to redirect the us
 Status code `200` on success.
 
 Response body:
+
 ```json
 {
     "token": "<auth token>",
@@ -105,6 +109,7 @@ Response body:
 Status code 200.
 
 Response body:
+
 ```json
 {
     "id": "<user id>",
@@ -147,6 +152,7 @@ regardless of the owner. This only has an effect for admin users.
 Status code 200 on success.
 
 Response body:
+
 ```json
 [
     {
@@ -177,6 +183,7 @@ Response body:
 Status code 200 on success.
 
 Response body:
+
 ```json
 {
     "id": "<container ID to be used in other requests>",
@@ -210,6 +217,7 @@ Status code 200 on success.
 Status code 200 on success.
 
 Response body:
+
 ```json
 [
     {
@@ -232,6 +240,7 @@ Response body:
 Status code 200 on success.
 
 Response body:
+
 ```json
 {
     "countdownDuration": <duration of the countdown in seconds>,
@@ -299,6 +308,7 @@ Status code 200 on success.
 #### Request body
 
 Either:
+
 ```json
 {
     "id": <ID of the player to be banned>
@@ -306,6 +316,7 @@ Either:
 ```
 
 or
+
 ```json
 {
     "name": "<name of the player to be banned>"
@@ -325,6 +336,7 @@ status code 200 on success.
 #### Request body
 
 Either:
+
 ```json
 {
     "id": <ID of the player to be disconnected>
@@ -332,6 +344,7 @@ Either:
 ```
 
 or
+
 ```json
 {
     "name": "<name of the player to be disconnected>"

@@ -26,4 +26,5 @@ app.get("*", (req, res) => {
 
 init().catch((_) => {});
 
-app.listen(+process.env.SERVER_PORT || 8080, () => { console.log("Server listening on port 8080"); });
+const port = process.env.SERVER_PORT || 8080;
+app.listen(+port, () => { console.log(`Server listening on port ${port}`); });
