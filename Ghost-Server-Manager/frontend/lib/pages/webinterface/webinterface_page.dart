@@ -222,18 +222,19 @@ class _SettingsSectionState extends State<_SettingsSection> {
     acceptingSpectators = widget.settings.acceptingSpectators;
   }
 
+  GhostServerSettings newSettings() => GhostServerSettings(
+    preCountdownCommands: preCommandsController.text.trim(),
+    postCountdownCommands: postCommandsController.text.trim(),
+    countdownDuration: int.tryParse(countdownDurationController.text) ?? 1,
+    acceptingPlayers: acceptingPlayers,
+    acceptingSpectators: acceptingSpectators,
+  );
+
+  bool isDirty() => newSettings() != widget.settings;
+
   Future<void> saveSettings() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
-
-    widget.updateSettings(
-      widget.settings.copyWith(
-        preCountdownCommands: preCommandsController.text.trim(),
-        postCountdownCommands: postCommandsController.text.trim(),
-        countdownDuration: int.parse(countdownDurationController.text),
-        acceptingPlayers: acceptingPlayers,
-        acceptingSpectators: acceptingSpectators,
-      ),
-    );
+    widget.updateSettings(newSettings());
   }
 
   @override
@@ -271,6 +272,7 @@ class _SettingsSectionState extends State<_SettingsSection> {
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (_) => setState(() {}),
                   validator: (s) {
                     if (s == null || s.isEmpty) {
                       return "Please provide the countdown duration.";
@@ -299,6 +301,7 @@ class _SettingsSectionState extends State<_SettingsSection> {
                     labelText: "Pre-Countdown Commands",
                   ),
                   maxLines: null,
+                  onChanged: (_) => setState(() {}),
                 ),
               ),
               const SizedBox(width: 20),
@@ -311,13 +314,14 @@ class _SettingsSectionState extends State<_SettingsSection> {
                     labelText: "Post-Countdown Commands",
                   ),
                   maxLines: null,
+                  onChanged: (_) => setState(() {}),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 40),
           FilledButton.icon(
-            onPressed: saveSettings,
+            onPressed: isDirty() ? saveSettings : null,
             icon: const Icon(Icons.save_outlined),
             label: const Text("Save"),
           ),
