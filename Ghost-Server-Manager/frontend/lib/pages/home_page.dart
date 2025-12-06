@@ -109,34 +109,38 @@ class _HomePageState extends State<HomePage> {
       body: Padding(
         padding: const EdgeInsets.all(10),
         child: !loading
-            ? Center(
+            ? Align(
+                alignment: Alignment.topCenter,
                 child: SizedBox(
                   width: MediaQuery.sizeOf(context).width / 2,
-                  child: Column(
-                    children: [
-                      if (currentUser.role == Role.admin) ...[
-                        SwitchListTile(
-                          value: showAllServers,
-                          onChanged: (b) {
-                            setState(() => showAllServers = b);
-                            setup();
-                          },
-                          title: const Text("Show All"),
-                        ),
-                        const Divider(height: 20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        if (currentUser.role == Role.admin) ...[
+                          SwitchListTile(
+                            value: showAllServers,
+                            onChanged: (b) {
+                              setState(() => showAllServers = b);
+                              setup();
+                            },
+                            title: const Text("Show All"),
+                          ),
+                          const Divider(height: 20),
+                        ],
+                        servers.isNotEmpty
+                            ? ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: servers.length,
+                                itemBuilder: (context, i) => _GhostServerCard(
+                                  server: servers[i],
+                                  currentUser: currentUser,
+                                  update: setup,
+                                ),
+                              )
+                            : const Center(child: Text("Nothing to show")),
                       ],
-                      servers.isNotEmpty
-                          ? ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: servers.length,
-                              itemBuilder: (context, i) => _GhostServerCard(
-                                server: servers[i],
-                                currentUser: currentUser,
-                                update: setup,
-                              ),
-                            )
-                          : const Center(child: Text("Nothing to show")),
-                    ],
+                    ),
                   ),
                 ),
               )
