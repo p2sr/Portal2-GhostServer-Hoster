@@ -86,7 +86,7 @@ export async function getRunningContainerIds(): Promise<string[]> {
 
 export async function pruneContainers() {
     try {
-        docker.pruneContainers();
+        await docker.pruneContainers();
     } catch (error) {
         // A prune operation is already running
         if (error.statusCode !== 409) {
