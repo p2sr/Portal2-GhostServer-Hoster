@@ -1,6 +1,6 @@
 # portal2_ghost_server_hoster
 
-A new Flutter project.
+Host your own Portal 2 Ghost-Servers and speedrun with friends!
 
 ## Getting Started
 

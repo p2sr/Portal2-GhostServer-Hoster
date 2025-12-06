@@ -1,5 +1,5 @@
 name: portal2_ghost_server_hoster
-description: "A new Flutter project."
+description: "Host your own Portal 2 Ghost-Servers and speedrun with friends!"
 publish_to: 'none'
 version: 1.0.0+1
 
