@@ -35,7 +35,11 @@ app.get("/stopServer", (_, res) => {
 	exit();
 });
 
-app.get("/settings", (_, res) => { res.status(200).json(settings); });
+app.get("/settings", (_, res) => {
+	settings.acceptingPlayers = ghostServer.getAcceptingPlayers();
+	settings.acceptingSpectators = ghostServer.getAcceptingSpectators();
+	res.status(200).json(settings);
+});
 
 app.put("/settings", (req, res) => {
 	settings.updateFrom(req.body);

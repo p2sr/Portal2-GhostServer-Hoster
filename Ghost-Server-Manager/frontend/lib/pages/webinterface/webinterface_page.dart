@@ -129,6 +129,7 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: const Text("Countdown started!")),
           );
+          setup();
         },
         icon: const Icon(Icons.play_arrow_outlined),
         label: const Text("Start Countdown"),
