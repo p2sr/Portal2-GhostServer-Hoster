@@ -238,6 +238,14 @@ class _GhostServerCard extends StatelessWidget {
   final User currentUser;
   final void Function() update;
 
+  Future<void> deleteGhostServer(BuildContext context) async {
+    var didDelete = await showDialog<bool?>(
+      context: context,
+      builder: (context) => DeleteGhostServerDialog(server: server),
+    );
+    if (didDelete ?? false) update();
+  }
+
   @override
   Widget build(BuildContext context) {
     var content = Padding(
@@ -264,15 +272,7 @@ class _GhostServerCard extends StatelessWidget {
               ),
               const Spacer(),
               IconButton(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => DeleteGhostServerDialog(
-                      server: server,
-                      update: update,
-                    ),
-                  );
-                },
+                onPressed: () => deleteGhostServer(context),
                 icon: const Icon(Icons.delete_outlined),
               ),
             ],
@@ -289,7 +289,10 @@ class _GhostServerCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               FilledButton.tonal(
-                onPressed: () => context.go("/webinterface/${server.id}"),
+                onPressed: () async {
+                  await context.push("/webinterface/${server.id}");
+                  update();
+                },
                 child: const Text("Webinterface"),
               ),
             ],
@@ -334,36 +337,46 @@ class GhostServerConnectCommandField extends StatelessWidget {
   }
 }
 
-class DeleteGhostServerDialog extends StatelessWidget {
-  const DeleteGhostServerDialog({
-    super.key,
-    required this.server,
-    required this.update,
-  });
+class DeleteGhostServerDialog extends StatefulWidget {
+  const DeleteGhostServerDialog({super.key, required this.server});
 
   final GhostServer server;
-  final void Function() update;
+
+  @override
+  State<DeleteGhostServerDialog> createState() =>
+      _DeleteGhostServerDialogState();
+}
+
+class _DeleteGhostServerDialogState extends State<DeleteGhostServerDialog> {
+  bool loading = false;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text("Delete Ghost Server"),
-      content: Text(
-        "Do you really want to delete the Ghost Server "
-        "\"${server.name}\"? This cannot be reverted!",
-      ),
+      content: !loading
+          ? Text(
+              "Do you really want to delete the Ghost Server "
+              "\"${widget.server.name}\"? This cannot be reverted!",
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [CircularProgressIndicator()],
+            ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: !loading ? () => Navigator.pop(context) : null,
           child: const Text("Cancel"),
         ),
         TextButton(
-          onPressed: () async {
-            await Backend.deleteGhostServer(server.id);
-            if (!context.mounted) return;
-            Navigator.pop(context);
-            update();
-          },
+          onPressed: !loading
+              ? () async {
+                  setState(() => loading = true);
+                  await Backend.deleteGhostServer(widget.server.id);
+                  if (!context.mounted) return;
+                  Navigator.pop(context, true);
+                }
+              : null,
           child: const Text("Delete"),
         ),
       ],
@@ -415,11 +428,11 @@ class _CreateGhostServerDialogState extends State<_CreateGhostServerDialog> {
             ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: !loading ? () => Navigator.pop(context) : null,
           child: const Text("Cancel"),
         ),
         TextButton(
-          onPressed: createGhostServer,
+          onPressed: !loading ? createGhostServer : null,
           child: const Text("Create"),
         ),
       ],

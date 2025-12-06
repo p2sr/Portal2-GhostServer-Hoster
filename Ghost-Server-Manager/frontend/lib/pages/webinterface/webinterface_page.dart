@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_server_hoster/backend/backend.dart';
 import 'package:portal2_ghost_server_hoster/pages/home_page.dart';
 import 'package:portal2_ghost_server_hoster/pages/webinterface/players_tab.dart';
@@ -45,6 +46,20 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
     setState(() => loading = false);
   }
 
+  Future<void> deleteGhostServer() async {
+    var didDelete = await showDialog<bool?>(
+      context: context,
+      builder: (context) => DeleteGhostServerDialog(server: server!),
+    );
+    if (didDelete ?? false) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text("Ghost Server successfully deleted!")),
+      );
+      context.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,15 +73,7 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
           ),
           if (!loading)
             IconButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => DeleteGhostServerDialog(
-                    server: server!,
-                    update: setup,
-                  ),
-                );
-              },
+              onPressed: deleteGhostServer,
               icon: const Icon(Icons.delete_outlined),
             ),
         ],
