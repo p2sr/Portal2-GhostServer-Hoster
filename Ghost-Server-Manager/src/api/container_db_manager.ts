@@ -63,6 +63,7 @@ export async function removeContainersNotRunning() {
 	if (!db) await openDatabase();
 	const runningContainerIds = await docker.getRunningContainerIds();
 	await db?.run(`DELETE FROM containers WHERE container_id NOT IN (${runningContainerIds.map((_) => '?').join(',')})`, runningContainerIds);
+	await docker.pruneContainers();
 }
 
 export async function createContainer(id: string, port: number, wsPort: number, userId: number, name: string = "") {

@@ -44,10 +44,14 @@ export async function createContainer(port: number, wsPort: number): Promise<str
 
     await container.start();
     await waitForContainerStart(container);
-    await new Promise(resolve => setTimeout(resolve, 2000));
 
     logger.info({ source: "createContainer", message: "Container ready. Requesting websocket start..." });
-    await axios.get(`http://localhost:${port}/startServer`);
+    try {
+        await axios.get(`http://localhost:${port}/startServer`);
+    } catch (error) {
+        logger.error({ source: "createContainer", message: `Failed to start websocket server in container: ${error}` });
+        throw error;
+    }
 
     logger.info({ source: "createContainer", message: "Container successfully started" });
     return container.id;
@@ -78,6 +82,10 @@ function waitForContainerStart(container: Docker.Container): Promise<void> {
 
 export async function getRunningContainerIds(): Promise<string[]> {
     return (await docker.listContainers()).map((container) => container.Id);
+}
+
+export async function pruneContainers() {
+    await docker.pruneContainers();
 }
 
 export async function stopContainer(port: number, updateDatabase: boolean = true) {

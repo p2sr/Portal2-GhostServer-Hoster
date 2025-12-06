@@ -6,7 +6,7 @@ import axios, { AxiosResponse, Method } from "axios";
 import * as user_db from "../auth/account_manager";
 import * as docker from "./docker_helper";
 
-const MAX_NUMBER_OF_GHOST_SERVERS = 10;
+const MAX_NUMBER_OF_GHOST_SERVERS = parseInt(process.env.MAX_NUMBER_OF_GHOST_SERVERS || "10", 10);
 
 export const router = express.Router();
 
@@ -34,10 +34,16 @@ router.post("/create", async (req, res) => {
 		return;
 	}
 
-	const containerId = await docker.createContainer(port, wsPort);
+	try {
+		const containerId = await docker.createContainer(port, wsPort);
 
-	const name = "name" in req.query ? req.query.name.toString() : "Ghost Server"
-	db.createContainer(containerId, port, wsPort, req.body.user.id, name);
+		const name = "name" in req.query ? req.query.name.toString() : "Ghost Server"
+		db.createContainer(containerId, port, wsPort, req.body.user.id, name);
+	} catch (error) {
+		logger.error({ source: "createServer", message: `Failed to create container: ${error}` });
+		res.status(500).send("Failed to create container");
+		return;
+	}
 
 	res.status(201).send();
 });
