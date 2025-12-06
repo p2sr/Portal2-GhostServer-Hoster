@@ -61,7 +61,7 @@ The redirect URI needs to be registered in the application's settings!
 
 ## Contributing
 
-You can contribute to the project in different ways. You can use the official host of the website ([ghost.portal2.sr](https://ghost.portal2.sr/)) and report bugs either here under Issues or on Discord on the [Portal 2 Speedrun Server](https://discord.gg/2PwGP73t).
+You can contribute to the project in different ways. You can use the official host of the website ([ghost.portal2.sr](https://ghost.portal2.sr/)) and report bugs either here under Issues or on Discord on the [Portal 2 Speedrun Server](https://discord.com/invite/hRwE4Zr).
 
 Pull requests are also very welcome!
 

@@ -5,6 +5,19 @@ import * as db from "./container_db_manager";
 
 const docker = new Docker();
 
+// Fast fail if Docker Engine is not reachable
+async function checkDockerConnection(): Promise<void> {
+    try {
+        await docker.ping();
+        logger.info({ source: "docker_helper", message: "Successfully connected to Docker Engine" });
+    } catch (error) {
+        logger.error({ source: "docker_helper", message: `Failed to initialize Docker client: ${error}` });
+        logger.error({ source: "docker_helper", message: "Make sure Docker Engine is running and accessible." });
+        process.exit(1);
+    }
+}
+checkDockerConnection();
+
 export async function createContainer(port: number, wsPort: number): Promise<string> {
     logger.info({ source: "createContainer", message: `Starting container with port: ${port} and wsPort: ${wsPort}...` });
 
@@ -68,7 +81,11 @@ export async function getRunningContainerIds(): Promise<string[]> {
 }
 
 export async function stopContainer(port: number, updateDatabase: boolean = true) {
-    await axios.get(`http://localhost:${port}/stopServer`);
+    try {
+        await axios.get(`http://localhost:${port}/stopServer`);
+    } catch (error) {
+        // race condition: server already stopped
+    }
     if (updateDatabase) await db.removeContainersNotRunning();
 
     // const container = docker.getContainer(containerId);
