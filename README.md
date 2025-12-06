@@ -32,6 +32,7 @@ An official version of the website can be found at [ghost.portal2.sr](https://gh
     SSL_CERT="<(optional) path to SSL certificate file (https)>"
     DISCORD_CLIENT_ID="<(optional) discord oauth application client ID>"
     DISCORD_CLIENT_SECRET="<(optional) discord oauth application client secret>"
+    MAX_NUMBER_OF_GHOST_SERVERS="<(optional) maximum number of concurrent ghost servers>
     ```
 
 4. (Optional) Set mailer credentials in `./res/mail-account.json`:
