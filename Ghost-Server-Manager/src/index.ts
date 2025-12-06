@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { router as authRouter } from "./auth/auth_router";
 import { router as serverRouter } from "./api/server_router";
@@ -10,6 +10,20 @@ import https from "https";
 import fs from "fs";
 
 const app = express();
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const raw = req.url || '';
+    const pathOnly = raw.split('?')[0];
+    try {
+        decodeURIComponent(pathOnly);
+        next();
+    } catch (err: any) {
+        if (err instanceof URIError) {
+            return res.status(400).send('Bad Request');
+        }
+        next(err);
+    }
+});
 
 app.use(cors());
 
