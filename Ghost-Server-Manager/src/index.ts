@@ -11,7 +11,7 @@ import fs from "fs";
 
 const app = express();
 
-app.use((req: Request, res: Response, next: NextFunction) => {
+const urlDecodeCheck = (req: Request, res: Response, next: NextFunction) => {
     const raw = req.url || '';
     const pathOnly = raw.split('?')[0];
     try {
@@ -23,7 +23,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
         }
         next(err);
     }
-});
+};
+
+app.use(urlDecodeCheck);
 
 app.use(cors());
 
@@ -59,6 +61,7 @@ if (process.env.PROTOCOL === "https") {
     // HTTP upgrade
     if (port !== 80) {
         var http = express();
+        http.use(urlDecodeCheck);
         http.get('*', function(req, res) {
             res.redirect(`https://${host}:${port}${req.url}`);
         });
