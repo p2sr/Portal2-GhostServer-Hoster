@@ -65,6 +65,7 @@ class _HomePageState extends State<HomePage> {
         (await showDialog<bool>(
           context: context,
           builder: (context) => _DeleteAccountDialog(currentUser: currentUser),
+          barrierDismissible: false,
         )) ??
         false;
 
@@ -152,6 +153,7 @@ class _HomePageState extends State<HomePage> {
               (await showDialog<bool>(
                 context: context,
                 builder: (context) => _CreateGhostServerDialog(),
+                barrierDismissible: false,
               )) ??
               false;
 
@@ -246,6 +248,7 @@ class _GhostServerCard extends StatelessWidget {
     var didDelete = await showDialog<bool?>(
       context: context,
       builder: (context) => DeleteGhostServerDialog(server: server),
+      barrierDismissible: false,
     );
     if (didDelete ?? false) update();
   }

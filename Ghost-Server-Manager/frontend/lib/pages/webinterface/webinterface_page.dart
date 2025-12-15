@@ -74,6 +74,7 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
     var didDelete = await showDialog<bool?>(
       context: context,
       builder: (context) => DeleteGhostServerDialog(server: server!),
+      barrierDismissible: false,
     );
     if (didDelete ?? false) {
       if (!mounted) return;
