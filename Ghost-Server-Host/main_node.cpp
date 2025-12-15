@@ -1,11 +1,21 @@
 #include <node.h>
+#include <uv.h>
 #include <string>
 #include <iostream>
 #include <future>
+#include <map>
+#include <mutex>
+#include <set>
 
 #include "GhostServer/GhostServer/networkmanager.h"
 
 static NetworkManager g_network;
+
+static std::map<int, std::tuple<std::string, v8::Global<v8::Function>>> g_eventCallbacks;
+static uv_async_t g_eventCallbacksAsyncHandle;
+
+static std::mutex g_triggeredEventsMutex;
+static std::set<std::string> g_triggeredEvents;
 
 #define NODE_FUNC(name)                                                                                                                           \
     v8::Local<v8::Value> name##_callback(v8::Isolate *isolate, v8::Local<v8::Context> &context, const v8::FunctionCallbackInfo<v8::Value> &args); \
@@ -77,6 +87,85 @@ NODE_FUNC(list)
     }
 
     return result;
+}
+
+// Calling v8 methods from different threads is not really easy. Therefore, we use libuv to create a task on
+// the main event loop, which we can call from the callback registered in the NetworkManager. Since this task
+// then runs on the same thread as the rest of the Node event loop, we can more easily call the functions
+// passed in from JS.
+
+void connectedClientsChangedAsyncCallback(uv_async_t* handle) {
+    // setup environment to call JS function
+    auto* isolate = v8::Isolate::GetCurrent();
+    v8::HandleScope scope(isolate);
+    v8::Locker locker(isolate);
+    v8::Isolate::Scope isolateScope(isolate);
+
+    auto context = isolate->GetCurrentContext();
+
+    g_triggeredEventsMutex.lock();
+
+    for (auto const& [id, cbk] : g_eventCallbacks) {
+        auto const& [event, fn] = cbk;
+        if (g_triggeredEvents.find(event) == g_triggeredEvents.end()) continue;
+
+        v8::Local<v8::Function> callback = fn.Get(isolate);
+        callback->Call(context, context->Global(), 0, {});
+    }
+
+    g_triggeredEvents.clear();
+    g_triggeredEventsMutex.unlock();
+}
+
+NODE_FUNC(registerEventCallback)
+{
+    if (args.Length() != 2)
+        return v8::Undefined(isolate);
+
+    if (!args[0]->IsString())
+        return v8::Undefined(isolate);
+
+    if (!args[1]->IsFunction())
+        return v8::Undefined(isolate);
+
+    auto event = toCppString(isolate, args[0]->ToString(context));
+
+    int callbackId = 0;
+    scheduleServerThreadAndWait([&] {
+        std::string theEvent = event;
+        callbackId = g_network.RegisterEventCallback(event, [theEvent] {
+            // Trigger libuv callback. This schedules the the function to run on the event loop, and can then call
+            // the JS functions safely.
+            g_triggeredEventsMutex.lock();
+            g_triggeredEvents.insert(theEvent);
+            g_triggeredEventsMutex.unlock();
+            uv_async_send(&g_eventCallbacksAsyncHandle);
+        });
+    });
+
+    g_eventCallbacks.insert({callbackId, (std::tuple<std::string, v8::Global<v8::Function>>){event, v8::Global<v8::Function>()}});
+    std::get<1>(g_eventCallbacks[callbackId]).Reset(isolate, args[1].As<v8::Function>());
+
+    return v8::Number::New(isolate, static_cast<double>(callbackId));
+}
+
+NODE_FUNC(unregisterEventCallback)
+{
+    if (args.Length() != 1)
+        return v8::Undefined(isolate);
+
+    if (!args[0]->IsNumber())
+        return v8::Undefined(isolate);
+
+    auto id = args[0]->NumberValue(context).ToChecked();
+
+    scheduleServerThreadAndWait([=] {
+        std::get<1>(g_eventCallbacks[id]).Reset();
+        g_eventCallbacks.erase(id);
+        g_network.UnregisterEventCallback(id);
+    });
+
+    return v8::Undefined(isolate);
 }
 
 NODE_FUNC(startCountdown)
@@ -318,6 +407,9 @@ void Initialize(v8::Local<v8::Object> exports)
 {
     NODE_SET_METHOD(exports, "list", list);
 
+    NODE_SET_METHOD(exports, "registerEventCallback", registerEventCallback);
+    NODE_SET_METHOD(exports, "unregisterEventCallback", unregisterEventCallback);
+
     NODE_SET_METHOD(exports, "startServer", startServer);
     NODE_SET_METHOD(exports, "exit", exit);
 
@@ -342,6 +434,9 @@ void Initialize(v8::Local<v8::Object> exports)
     NODE_SET_METHOD(exports, "addIpToWhitelist", addIpToWhitelist);
     NODE_SET_METHOD(exports, "removeNameFromWhitelist", removeNameFromWhitelist);
     NODE_SET_METHOD(exports, "removeIpFromWhitelist", removeIpFromWhitelist);
+
+    // create async task for calling the connected clients changed callbacks
+    uv_async_init(node::GetCurrentEventLoop(v8::Isolate::GetCurrent()), &g_eventCallbacksAsyncHandle, connectedClientsChangedAsyncCallback);
 }
 
 NODE_MODULE(p2_ghost_server, Initialize)

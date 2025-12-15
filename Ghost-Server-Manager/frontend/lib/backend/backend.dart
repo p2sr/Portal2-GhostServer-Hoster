@@ -16,13 +16,20 @@ part 'backend.g.dart';
 const _hostBuild = String.fromEnvironment('HOST', defaultValue: '');
 const _portBuild = String.fromEnvironment('SERVER_PORT', defaultValue: '');
 const _protocolBuild = String.fromEnvironment('PROTOCOL', defaultValue: '');
-const _discordClientIdBuild = String.fromEnvironment('DISCORD_CLIENT_ID', defaultValue: '');
+const _discordClientIdBuild = String.fromEnvironment(
+  'DISCORD_CLIENT_ID',
+  defaultValue: '',
+);
 
-String get _host =>_hostBuild.isNotEmpty ? _hostBuild : dotenv.env["HOST"] ?? 'localhost';
+String get _host =>
+    _hostBuild.isNotEmpty ? _hostBuild : dotenv.env["HOST"] ?? 'localhost';
 
-String get _port => _portBuild.isNotEmpty ? _portBuild : dotenv.env["SERVER_PORT"] ?? '8080';
+String get _port =>
+    _portBuild.isNotEmpty ? _portBuild : dotenv.env["SERVER_PORT"] ?? '8080';
 
-String get _protocol => _protocolBuild.isNotEmpty ? _protocolBuild : dotenv.env["PROTOCOL"] ?? 'http';
+String get _protocol => _protocolBuild.isNotEmpty
+    ? _protocolBuild
+    : dotenv.env["PROTOCOL"] ?? 'http';
 
 String get _baseUri => "$_protocol://$_host:$_port";
 
@@ -30,7 +37,9 @@ String get _baseAuthUri => "$_baseUri/api/auth";
 
 String get _baseServerUri => "$_baseUri/api/server";
 
-bool get kSupportsDiscordAuth => _discordClientIdBuild.isNotEmpty || dotenv.env.containsKey("DISCORD_CLIENT_ID");
+bool get kSupportsDiscordAuth =>
+    _discordClientIdBuild.isNotEmpty ||
+    dotenv.env.containsKey("DISCORD_CLIENT_ID");
 
 typedef Json = Map<String, dynamic>;
 
@@ -122,6 +131,10 @@ class _Backend {
       (await SharedPreferences.getInstance()).getString(spAuthTokenKey) ??
       (throw "Please log in!");
 
+  Future<String> authHeader() async => "Bearer ${await _getAuthToken()}";
+
+  String playersStreamUrl(int id) => "$_baseServerUri/$id/listPlayers/stream";
+
   Future<http.Response> _postJson(
     String uri, {
     Json body = const {},
@@ -130,8 +143,7 @@ class _Backend {
     Uri.parse(uri),
     headers: {
       HttpHeaders.contentTypeHeader: "application/json",
-      if (authenticated)
-        HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
+      if (authenticated) HttpHeaders.authorizationHeader: await authHeader(),
     },
     body: jsonEncode(body),
   );
@@ -144,8 +156,7 @@ class _Backend {
     Uri.parse(uri),
     headers: {
       HttpHeaders.contentTypeHeader: "application/json",
-      if (authenticated)
-        HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
+      if (authenticated) HttpHeaders.authorizationHeader: await authHeader(),
     },
     body: jsonEncode(body),
   );
@@ -156,8 +167,7 @@ class _Backend {
   }) async => http.get(
     Uri.parse(uri),
     headers: {
-      if (authenticated)
-        HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
+      if (authenticated) HttpHeaders.authorizationHeader: await authHeader(),
     },
   );
 
@@ -169,8 +179,7 @@ class _Backend {
     Uri.parse(uri),
     headers: {
       HttpHeaders.contentTypeHeader: "application/json",
-      if (authenticated)
-        HttpHeaders.authorizationHeader: "Bearer ${await _getAuthToken()}",
+      if (authenticated) HttpHeaders.authorizationHeader: await authHeader(),
     },
     body: jsonEncode(body),
   );
@@ -271,13 +280,17 @@ class _Backend {
   Future<void> startCountdown(int id) =>
       _postJson("$_baseServerUri/$id/startCountdown", authenticated: true);
 
+  List<Player> parsePlayersJson(String json) {
+    var list = jsonDecode(json) as List<dynamic>;
+    return list.cast<Json>().map(Player.fromJson).toList();
+  }
+
   Future<List<Player>> getPlayers(int id) async {
     var response = await _get(
       "$_baseServerUri/$id/listPlayers",
       authenticated: true,
     );
-    var resp = jsonDecode(response.body) as List<dynamic>;
-    return resp.cast<Json>().map(Player.fromJson).toList();
+    return parsePlayersJson(response.body);
   }
 
   Future<void> disconnectPlayerById(int serverId, int playerId) => _put(

@@ -95,6 +95,40 @@ router.get("/:id/listPlayers", async (req, res) => {
 	await passthroughToContainer(req, res, "/listPlayers", "GET");
 });
 
+router.get("/:id/listPlayers/stream", async (req, res) => {
+	await db.openDatabase();
+	const container = await db.getContainerFromParameter(req.params["id"], req.body.user);
+	if (container === undefined) {
+		res.status(400).send("Invalid container ID");
+		return;
+	}
+
+	res.setHeader('Cache-Control', 'no-cache');
+	res.setHeader('Content-Type', 'text/event-stream');
+	res.setHeader('Access-Control-Allow-Origin', '*');
+	res.setHeader('Connection', 'keep-alive');
+	res.flushHeaders(); // flush the headers to establish SSE with client
+
+	const cancelToken = axios.CancelToken.source();
+	const containerResponse = await axios({
+		url: `http://localhost:${container.port}/listPlayers/stream`,
+		method: "GET",
+		validateStatus: () => true,
+		responseType: "stream",
+		cancelToken: cancelToken.token,
+	});
+
+	// forward stream to client
+	containerResponse.data.pipe(res);
+	containerResponse.data.on('close', () => res.end());
+
+	// if client closes connection, stop sending events
+	res.on('close', () => {
+		cancelToken.cancel();
+		res.end();
+	});
+});
+
 router.get("/:id/settings", async (req, res) => {
 	await passthroughToContainer(req, res, "/settings", "GET");
 });

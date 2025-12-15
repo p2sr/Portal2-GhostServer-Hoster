@@ -70,30 +70,29 @@ class _ConnectedPlayersTab extends StatelessWidget {
   final List<Player> players;
   final void Function() update;
 
-  Future<bool> showConfirmationDialog(
-    BuildContext context,
-    String title,
-    String content,
-    String confirmAction,
-  ) async =>
+  Future<bool> showConfirmationDialog(BuildContext context,
+      String title,
+      String content,
+      String confirmAction,) async =>
       (await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
+        builder: (context) =>
+            AlertDialog(
+              title: Text(title),
+              content: Text(content),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: Text(confirmAction),
+                ),
+              ],
             ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(confirmAction),
-            ),
-          ],
-        ),
       )) ??
-      false;
+          false;
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +109,7 @@ class _ConnectedPlayersTab extends StatelessWidget {
           ),
           subtitle: Text(
             "ID: ${player.id}"
-            "${player.isSpectator ? " • Spectator" : ""}",
+                "${player.isSpectator ? " • Spectator" : ""}",
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
@@ -201,58 +200,59 @@ class _WhitelistTabState extends State<_WhitelistTab> {
   Widget build(BuildContext context) {
     return !loading
         ? SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SwitchListTile(
-                  value: whitelist.enabled,
-                  onChanged: (b) async {
-                    setState(() => loading = true);
-                    await Backend.setWhitelistStatus(widget.serverId, b);
-                    setup();
-                  },
-                  title: const Text("Enabled"),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SwitchListTile(
+            value: whitelist.enabled,
+            onChanged: (b) async {
+              setState(() => loading = true);
+              await Backend.setWhitelistStatus(widget.serverId, b);
+              setup();
+            },
+            title: const Text("Enabled"),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FilledButton.icon(
+                onPressed: addToWhitelist,
+                icon: const Icon(Icons.add),
+                label: const Text("Add to whitelist"),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          whitelist.entries.isNotEmpty
+              ? ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: whitelist.entries.length,
+            itemBuilder: (context, i) =>
+                ListTile(
+                  title: Text(whitelist.entries[i].value),
+                  subtitle: Text(switch (whitelist.entries[i].type) {
+                    WhitelistEntryType.ip => "IP",
+                    WhitelistEntryType.name => "Name",
+                  }),
+                  trailing: IconButton(
+                    onPressed: () async {
+                      setState(() => loading = true);
+                      await Backend.removeFromWhitelist(
+                        widget.serverId,
+                        whitelist.entries[i],
+                      );
+                      setup();
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: addToWhitelist,
-                      icon: const Icon(Icons.add),
-                      label: const Text("Add to whitelist"),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                whitelist.entries.isNotEmpty
-                    ? ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: whitelist.entries.length,
-                        itemBuilder: (context, i) => ListTile(
-                          title: Text(whitelist.entries[i].value),
-                          subtitle: Text(switch (whitelist.entries[i].type) {
-                            WhitelistEntryType.ip => "IP",
-                            WhitelistEntryType.name => "Name",
-                          }),
-                          trailing: IconButton(
-                            onPressed: () async {
-                              setState(() => loading = true);
-                              await Backend.removeFromWhitelist(
-                                widget.serverId,
-                                whitelist.entries[i],
-                              );
-                              setup();
-                            },
-                            icon: const Icon(Icons.close),
-                          ),
-                        ),
-                      )
-                    : const Text("No players on whitelist"),
-              ],
-            ),
           )
+              : const Text("No players on whitelist"),
+        ],
+      ),
+    )
         : const Center(child: CircularProgressIndicator());
   }
 }

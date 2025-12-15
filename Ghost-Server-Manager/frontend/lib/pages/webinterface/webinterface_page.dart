@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_server_hoster/backend/backend.dart';
+import 'package:portal2_ghost_server_hoster/backend/sse_client.dart';
 import 'package:portal2_ghost_server_hoster/pages/home_page.dart';
 import 'package:portal2_ghost_server_hoster/pages/webinterface/players_tab.dart';
 
@@ -19,7 +22,9 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
 
   GhostServer? server;
   late GhostServerSettings settings;
+
   List<Player> players = [];
+  SseClient? playersStreamClient;
 
   int navigationRailSelectedIndex = 0;
 
@@ -36,7 +41,26 @@ class _WebinterfacePageState extends State<WebinterfacePage> {
     settings = await Backend.getGhostServerSettingsById(widget.serverId);
     players = await Backend.getPlayers(widget.serverId);
 
+    if (playersStreamClient == null) {
+      playersStreamClient = await SseClient.connect(
+        url: Backend.playersStreamUrl(widget.serverId),
+        headers: {
+          HttpHeaders.authorizationHeader: await Backend.authHeader(),
+        },
+      );
+
+      playersStreamClient!.stream.listen((event) {
+        setState(() => players = Backend.parsePlayersJson(event.data!));
+      });
+    }
+
     setState(() => loading = false);
+  }
+
+  @override
+  void dispose() {
+    playersStreamClient?.close();
+    super.dispose();
   }
 
   Future<void> updateSettings(GhostServerSettings settings) async {

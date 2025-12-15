@@ -69,6 +69,24 @@ app.get("/listPlayers", (_, res) => {
 	res.json(ghostServer.list());
 });
 
+app.get("/listPlayers/stream", async (req, res) => {
+	res.setHeader('Cache-Control', 'no-cache');
+	res.setHeader('Content-Type', 'text/event-stream');
+	res.setHeader('Access-Control-Allow-Origin', '*');
+	res.setHeader('Connection', 'keep-alive');
+	res.flushHeaders(); // flush the headers to establish SSE with client
+
+	const id = ghostServer.registerEventCallback("client_change", () => {
+		res.write(`data: ${JSON.stringify(ghostServer.list())}\n\n`);
+	});
+
+	// if client closes connection, stop sending events
+	res.on('close', () => {
+		ghostServer.unregisterEventCallback(id);
+		res.end();
+	});
+});
+
 app.put("/disconnectPlayer", (req, res) => {
 	if ("id" in req.body) {
 		ghostServer.disconnectId(+req.body.id);

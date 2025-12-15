@@ -19,6 +19,9 @@ export class WhitelistEntry {
 
 export const list: () => Client[] = addon.list;
 
+export const registerEventCallback: (event: string, callback: () => void) => number = addon.registerEventCallback;
+export const unregisterEventCallback: (id: number) => number = addon.unregisterEventCallback;
+
 export const startServer: (port: number) => string = addon.startServer;
 export const exit: () => string = addon.exit;
 
