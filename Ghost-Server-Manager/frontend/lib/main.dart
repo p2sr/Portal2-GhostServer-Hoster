@@ -113,6 +113,16 @@ class _SiteFooter extends StatelessWidget {
               padding: EdgeInsets.zero,
               constraints: BoxConstraints(),
               onPressed: () async {
+                var uri = Uri.parse(p2srDiscordInviteUrl);
+                if (await canLaunchUrl(uri)) await launchUrl(uri);
+              },
+              icon: const Icon(Icons.discord),
+            ),
+            const SizedBox(width: 10),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(),
+              onPressed: () async {
                 var uri = Uri.parse(hosterGithubUrl);
                 if (await canLaunchUrl(uri)) await launchUrl(uri);
               },
