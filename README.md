@@ -32,21 +32,14 @@ An official version of the website can be found at [ghost.portal2.sr](https://gh
     SSL_CERT="<(optional) path to SSL certificate file (https)>"
     DISCORD_CLIENT_ID="<(optional) discord oauth application client ID>"
     DISCORD_CLIENT_SECRET="<(optional) discord oauth application client secret>"
-    MAX_NUMBER_OF_GHOST_SERVERS="<(optional) maximum number of concurrent ghost servers>
+    MAX_NUMBER_OF_GHOST_SERVERS="<(optional) maximum number of concurrent ghost servers>"
+    MAILER_SERVICE="<(optional) email service provider e.g. gmail>"
+    MAILER_USER="<(optional) email address to send mails from>"
+    MAILER_PASSWORD="<(optional) password or app password for the email account>"
     ```
 
-4. (Optional) Set mailer credentials in `./res/mail-account.json`:
-
-    ```json
-    {
-        "service": "<email service provider e.g. gmail>",
-        "user": "<email address to send mails from>",
-        "password": "<password or app password for the email account>"
-    }
-    ```
-
-5. Run `npm install`
-6. Run `npm start`. This will build the Flutter app and run the server.
+4. Run `npm install`
+5. Run `npm start`. This will build the Flutter app and run the server.
 
 Leave the Ghost-Server-Manager running in the background. It will serve the website and provide the API backend for it.
 

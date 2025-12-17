@@ -6,30 +6,30 @@ import { SentMessageInfo } from "nodemailer/lib/smtp-transport";
 
 let transporter: Transporter<SentMessageInfo> | undefined = undefined;
 
-const configFile = join(__dirname, "../../res/mail-account.json");
-
 export function init() {
 	return new Promise<void>((resolve, reject) => {
-		readFile(configFile, (err, data) => {
-			if (err) {
-				logger.error({ source: "mailer", message: `Error reading config file at: ${configFile}`, error: err });
+		if (process.env.MAILER_SERVICE !== undefined ||
+			process.env.MAILER_USER !== undefined ||
+			process.env.MAILER_PASSWORD !== undefined) {
+
+			try {
+				transporter = createTransport({
+					service: process.env.MAILER_SERVICE,
+					auth: {
+						user: process.env.MAILER_USER,
+						pass: process.env.MAILER_PASSWORD
+					}
+				});
+				logger.info({ source: "mailer", message: "Mailer successfully initialised!" });
+				resolve();
+			} catch (error) {
+				logger.error({ source: "mailer", message: "Error initialising mailer.", error });
 				reject();
-				return;
 			}
-
-			const json = JSON.parse(data.toString());
-
-			transporter = createTransport({
-				service: json.service,
-				auth: {
-					user: json.user,
-					pass: json.password
-				}
-			});
-
-			logger.info({ source: "mailer", message: "Mailer successfully initialized!" });
-			resolve();
-		});
+		} else {
+			logger.warn({ source: "mailer", message: "Mailer environment variable(s) not set, not initialising." });
+			reject();
+		}
 	});
 }
 
