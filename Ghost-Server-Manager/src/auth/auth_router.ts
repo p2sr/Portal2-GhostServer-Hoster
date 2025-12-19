@@ -108,16 +108,16 @@ router.post("/revokeToken", authMiddleware, async (req, res) => {
 	res.status(200).send();
 });
 
-router.get("/sendResetPassword", async (req, res) => {
-	if (!("email" in req.query)) {
+router.post("/requestPasswordReset", async (req, res) => {
+	if (!("email" in req.body)) {
 		res.status(400).send();
 		return;
 	}
 
-	const email = req.query.email.toString();
+	const email = req.body.email;
 	const token = await db.generatePasswordResetToken(email);
 	if (token === undefined) {
-		logger.warn({ source: "sendResetPassword", message: "Could not find the user." });
+		logger.warn({ source: "sendResetPassword", message: "User not found." });
 		res.status(400).send();
 		return;
 	}
@@ -126,8 +126,10 @@ router.get("/sendResetPassword", async (req, res) => {
 		const html = readFileSync(join(__dirname, "../../res/reset-password_email.html"))
 			.toString()
 			.replace(/({host})/g, `${req.protocol}://${req.hostname}:${req.socket.localPort}`) // aka replaceAll
-			.replace("{token}", token)
-			.replace("{email}", email);
+			.replace(/({hostname})/g, req.hostname)
+			.replace(/({token})/g, token)
+			.replace(/({email})/g, email)
+			.replace(/({validity})/g, db.PASSWORD_RESET_TOKEN_DURATION_HOURS.toString());
 
 		await sendMailHtml(email, "Password reset", html);
 	}

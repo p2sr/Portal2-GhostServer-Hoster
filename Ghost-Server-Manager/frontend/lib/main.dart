@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_server_hoster/pages/auth/finish_discord_login_page.dart';
 import 'package:portal2_ghost_server_hoster/pages/auth/login_page.dart';
 import 'package:portal2_ghost_server_hoster/pages/auth/register_page.dart';
+import 'package:portal2_ghost_server_hoster/pages/auth/reset_password_page.dart';
 import 'package:portal2_ghost_server_hoster/pages/help_dialog.dart';
 import 'package:portal2_ghost_server_hoster/pages/home_page.dart';
 import 'package:portal2_ghost_server_hoster/pages/webinterface/webinterface_page.dart';
@@ -67,6 +68,20 @@ Future<void> main() async {
                 path: '/finish_discord_login',
                 builder: (context, state) => FinishDiscordLoginPage(
                   code: state.uri.queryParameters["code"],
+                ),
+              ),
+              GoRoute(
+                path: '/reset_password',
+                redirect: (context, state) {
+                  if (!state.uri.queryParameters.containsKey("email") ||
+                      !state.uri.queryParameters.containsKey("token")) {
+                    return "/";
+                  }
+                  return null;
+                },
+                builder: (context, state) => ResetPasswordPage(
+                  email: state.uri.queryParameters["email"]!,
+                  token: state.uri.queryParameters["token"]!,
                 ),
               ),
               GoRoute(

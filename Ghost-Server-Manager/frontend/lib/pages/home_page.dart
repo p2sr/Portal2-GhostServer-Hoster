@@ -77,12 +77,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> logout() async {
     setState(() => loading = true);
-
-    await Backend.revokeAuthToken();
-    var sp = await SharedPreferences.getInstance();
-    sp.remove(spAuthTokenKey);
-    sp.remove(spAuthTokenExpiryKey);
-
+    await Backend.logout();
     if (!mounted) return;
     context.go("/login");
   }

@@ -9,6 +9,7 @@ import { AuthorizationCode } from "simple-oauth2";
 import axios from "axios";
 
 const AUTH_TOKEN_DURATION_DAYS = 300;
+export const PASSWORD_RESET_TOKEN_DURATION_HOURS = 5;
 
 const dbPath = join(__dirname, "../../db/users.db");
 
@@ -264,7 +265,7 @@ export async function deleteAuthToken(token: string) {
 
 export async function generatePasswordResetToken(email: string): Promise<string | undefined> {
 	if (!db) {
-		logger.error({ source: "generatePasswordResetToken - DB", message: "Database not open!" });
+		logger.error({ source: "generatePasswordResetToken", message: "Database not open!" });
 		return;
 	}
 
@@ -277,8 +278,10 @@ export async function generatePasswordResetToken(email: string): Promise<string 
 	if (row)
 		await db.run("DELETE FROM password_reset_tokens WHERE user_id = ?", [userRow.id]);
 
+	if (!hasEmailPasswordAuth(userRow.id)) return;
+
 	const token = randomBytes(30).toString('hex');
-	const expirationDate = addHours(Date.now(), 5).getTime();
+	const expirationDate = addHours(Date.now(), PASSWORD_RESET_TOKEN_DURATION_HOURS).getTime();
 	await db.run(`INSERT INTO password_reset_tokens (user_id, token, expirationDate) VALUES (?, ?, ?)`, [userRow.id, token, expirationDate]);
 
 	return token;
@@ -286,7 +289,7 @@ export async function generatePasswordResetToken(email: string): Promise<string 
 
 export async function validatePasswordResetCredentials(token: string, email: string): Promise<boolean> {
 	if (!db) {
-		logger.error({ source: "validatePasswordResetCredentials - DB", message: "Database not open!" });
+		logger.error({ source: "validatePasswordResetCredentials", message: "Database not open!" });
 		return false;
 	}
 
@@ -315,6 +318,10 @@ export async function resetPassword(token: string, email: string, newPassword: s
 	await db.run("DELETE FROM password_reset_tokens WHERE id = ?", [tokenRow.id]);
 
 	return true;
+}
+
+async function hasEmailPasswordAuth(userId: number): Promise<boolean> {
+	return (await db?.get("SELECT passwordHash FROM users WHERE id = ?", userId)).passwordHash === "";
 }
 
 function deleteExpiredPasswordResetTokens() {

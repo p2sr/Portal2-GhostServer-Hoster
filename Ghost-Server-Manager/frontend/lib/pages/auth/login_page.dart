@@ -25,13 +25,18 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final formKey = GlobalKey<FormState>();
+  final emailFormKey = GlobalKey<FormState>();
+  final passwordFormKey = GlobalKey<FormState>();
 
   String email = "";
   String password = "";
 
   Future<void> login() async {
-    if (!(formKey.currentState?.validate() ?? false)) return;
+    var formsValid = passwordFormKey.currentState?.validate() ?? false;
+    if (!(emailFormKey.currentState?.validate() ?? false)) {
+      formsValid = false;
+    }
+    if (!formsValid) return;
 
     try {
       var (token, expiry) = await Backend.login(email, password);
@@ -48,6 +53,23 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> requestPasswordReset() async {
+    if (!(emailFormKey.currentState?.validate() ?? false)) return;
+
+    var success = await Backend.requestPasswordReset(email);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? "An Email to reset your password has been sent to \"$email\"."
+              : "Failed sending a password reset email. Please try again later.",
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,12 +77,12 @@ class _LoginPageState extends State<LoginPage> {
       body: Center(
         child: SizedBox(
           width: MediaQuery.sizeOf(context).width / 3,
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextFormField(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Form(
+                key: emailFormKey,
+                child: TextFormField(
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                     alignLabelWithHint: true,
@@ -79,8 +101,11 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   onChanged: (s) => email = s.trim(),
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
+              ),
+              const SizedBox(height: 20),
+              Form(
+                key: passwordFormKey,
+                child: TextFormField(
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                     alignLabelWithHint: true,
@@ -97,26 +122,33 @@ class _LoginPageState extends State<LoginPage> {
                   onChanged: (s) => password = s,
                   obscureText: true,
                 ),
-                const SizedBox(height: 50),
-                FilledButton(
-                  onPressed: login,
-                  child: const Text("Login"),
-                ),
-                if (kSupportsDiscordAuth) ...[
-                  const SizedBox(height: 20),
-                  FilledButton.tonalIcon(
-                    onPressed: loginWithDiscord,
-                    icon: const Icon(Icons.discord),
-                    label: const Text("Login with Discord"),
-                  ),
-                ],
+              ),
+              const SizedBox(height: 50),
+              FilledButton(
+                onPressed: login,
+                child: const Text("Login"),
+              ),
+              if (kSupportsDiscordAuth) ...[
                 const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () => context.go("/login/register"),
-                  child: const Text("Register"),
+                FilledButton.tonalIcon(
+                  onPressed: loginWithDiscord,
+                  icon: const Icon(Icons.discord),
+                  label: const Text("Login with Discord"),
                 ),
               ],
-            ),
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () => context.go("/login/register"),
+                child: const Text("Register"),
+              ),
+              if (kSupportsPasswordReset) ...[
+                const SizedBox(height: 40),
+                TextButton(
+                  onPressed: requestPasswordReset,
+                  child: const Text("Reset Password"),
+                ),
+              ],
+            ],
           ),
         ),
       ),

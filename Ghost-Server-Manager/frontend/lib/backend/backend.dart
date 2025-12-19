@@ -20,6 +20,7 @@ const _discordClientIdBuild = String.fromEnvironment(
   'DISCORD_CLIENT_ID',
   defaultValue: '',
 );
+const _mailerUser = String.fromEnvironment('MAILER_USER', defaultValue: '');
 
 String get _host =>
     _hostBuild.isNotEmpty ? _hostBuild : dotenv.env["HOST"] ?? 'localhost';
@@ -36,6 +37,9 @@ String get _baseUri => "$_protocol://$_host:$_port";
 String get _baseAuthUri => "$_baseUri/api/auth";
 
 String get _baseServerUri => "$_baseUri/api/server";
+
+bool get kSupportsPasswordReset =>
+    _mailerUser.isNotEmpty || dotenv.env.containsKey('MAILER_USER');
 
 bool get kSupportsDiscordAuth =>
     _discordClientIdBuild.isNotEmpty ||
@@ -127,9 +131,20 @@ abstract class WhitelistEntry with _$WhitelistEntry {
 class _Backend {
   const _Backend();
 
+  Future<bool> _haveAuthToken() async =>
+      (await SharedPreferences.getInstance()).containsKey(spAuthTokenKey);
+
   Future<String> _getAuthToken() async =>
       (await SharedPreferences.getInstance()).getString(spAuthTokenKey) ??
       (throw "Please log in!");
+
+  Future<void> logout() async {
+    if (!await _haveAuthToken()) return;
+    await revokeAuthToken();
+    var sp = await SharedPreferences.getInstance();
+    sp.remove(spAuthTokenKey);
+    sp.remove(spAuthTokenExpiryKey);
+  }
 
   Future<String> authHeader() async => "Bearer ${await _getAuthToken()}";
 
@@ -219,6 +234,40 @@ class _Backend {
       body: {"email": email, "password": password},
     );
     if (response.statusCode != 201) throw response.body;
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    var response = await _postJson(
+      "$_baseAuthUri/requestPasswordReset",
+      body: {"email": email},
+    );
+    return response.statusCode == 200;
+  }
+
+  Future<bool> validatePasswordResetCredentials(
+    String email,
+    String token,
+  ) async {
+    var response = await _postJson(
+      "$_baseAuthUri/validatePasswordResetCredentials",
+      body: {
+        "email": email,
+        "token": token,
+      },
+    );
+    return response.statusCode == 200;
+  }
+
+  Future<void> resetPassword(
+    String email,
+    String token,
+    String newPassword,
+  ) async {
+    var response = await _postJson(
+      "$_baseAuthUri/resetPassword",
+      body: {"email": email, "token": token, "newPassword": newPassword},
+    );
+    if (response.statusCode != 200) throw response.body;
   }
 
   Future<User> getCurrentUser() async {
