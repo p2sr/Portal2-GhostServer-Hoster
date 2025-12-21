@@ -270,6 +270,26 @@ class _SettingsSectionState extends State<_SettingsSection> {
     widget.updateSettings(newSettings());
   }
 
+  Widget commandsTextField({
+    required String labelText,
+    required TextEditingController controller,
+  }) => TextFormField(
+    controller: controller,
+    decoration: InputDecoration(
+      border: const OutlineInputBorder(),
+      alignLabelWithHint: true,
+      labelText: labelText,
+      suffixIcon: controller.text.isNotEmpty
+          ? IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () => setState(() => controller.clear()),
+            )
+          : null,
+    ),
+    maxLines: null,
+    onChanged: (_) => setState(() {}),
+  );
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -326,28 +346,16 @@ class _SettingsSectionState extends State<_SettingsSection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Flexible(
-                child: TextFormField(
+                child: commandsTextField(
                   controller: preCommandsController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
-                    labelText: "Pre-Countdown Commands",
-                  ),
-                  maxLines: null,
-                  onChanged: (_) => setState(() {}),
+                  labelText: "Pre-Countdown Commands",
                 ),
               ),
               const SizedBox(width: 20),
               Flexible(
-                child: TextFormField(
+                child: commandsTextField(
                   controller: postCommandsController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    alignLabelWithHint: true,
-                    labelText: "Post-Countdown Commands",
-                  ),
-                  maxLines: null,
-                  onChanged: (_) => setState(() {}),
+                  labelText: "Post-Countdown Commands",
                 ),
               ),
             ],
