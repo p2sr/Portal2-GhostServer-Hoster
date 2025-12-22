@@ -1,12 +1,62 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:portal2_ghost_server_hoster/backend/backend.dart';
 import 'package:portal2_ghost_server_hoster/backend/sse_client.dart';
+import 'package:portal2_ghost_server_hoster/main.dart';
 import 'package:portal2_ghost_server_hoster/pages/home_page.dart';
 import 'package:portal2_ghost_server_hoster/pages/webinterface/players_tab.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const _commandsPresets = [
+  _CommandsPreset(
+    name: "Fullgame",
+    preCountdownCommands:
+        "ghost_sync 1\n"
+        "ghost_sync_countdown 3\n"
+        "svar_set sp_use_save 2\n"
+        "ghost_leaderboard_mode 1\n"
+        "ghost_leaderboard_reset\n"
+        "sar_on_load conds map=sp_a1_wakeup \"ghost_sync 0\" map=sp_a2_intro \"ghost_sync 1\"",
+    postCountdownCommands:
+        "sar_speedrun_skip_cutscenes 1\n"
+        "sar_speedrun_offset 18980\n"
+        "sar_speedrun_reset\n"
+        "stop\n"
+        "sv_allow_mobile_portals 0\n"
+        "load vault",
+  ),
+  _CommandsPreset(
+    name: "Speedrun Mod",
+    preCountdownCommands:
+        "ghost_sync 1\n"
+        "ghost_sync_countdown 3\n"
+        "svar_set sp_use_save 2\n"
+        "ghost_leaderboard_mode 1\n"
+        "ghost_leaderboard_reset",
+    postCountdownCommands:
+        "sar_speedrun_offset 0\n"
+        "sar_speedrun_reset\n"
+        "stop\n"
+        "sv_allow_mobile_portals 0\n"
+        "map sp_a1_intro1",
+  ),
+  _CommandsPreset(
+    name: "Portal Stories: Mel",
+    preCountdownCommands:
+        "ghost_sync 1\n"
+        "ghost_sync_countdown 3\n"
+        "ghost_leaderboard_mode 1\n"
+        "ghost_leaderboard_reset\n"
+        "sar_ent_slot_serial 838 16301",
+    postCountdownCommands:
+        "sar_speedrun_reset\n"
+        "map st_a1_tramride",
+  ),
+];
 
 class WebinterfacePage extends StatefulWidget {
   const WebinterfacePage({super.key, required this.serverId});
@@ -219,6 +269,18 @@ class _GeneralTab extends StatelessWidget {
   }
 }
 
+class _CommandsPreset {
+  const _CommandsPreset({
+    required this.name,
+    required this.preCountdownCommands,
+    required this.postCountdownCommands,
+  });
+
+  final String name;
+  final String preCountdownCommands;
+  final String postCountdownCommands;
+}
+
 class _SettingsSection extends StatefulWidget {
   const _SettingsSection({
     required this.serverId,
@@ -267,7 +329,14 @@ class _SettingsSectionState extends State<_SettingsSection> {
 
   Future<void> saveSettings() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
-    widget.updateSettings(newSettings());
+
+    var settings = newSettings();
+
+    var sp = await SharedPreferences.getInstance();
+    sp.setString(spLastPreCountdownCommands, settings.preCountdownCommands);
+    sp.setString(spLastPostCountdownCommands, settings.postCountdownCommands);
+
+    widget.updateSettings(settings);
   }
 
   Widget commandsTextField({
@@ -361,13 +430,177 @@ class _SettingsSectionState extends State<_SettingsSection> {
             ],
           ),
           const SizedBox(height: 40),
-          FilledButton.icon(
-            onPressed: isDirty() ? saveSettings : null,
-            icon: const Icon(Icons.save_outlined),
-            label: const Text("Save"),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: isDirty() ? saveSettings : null,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text("Save"),
+              ),
+              const SizedBox(width: 10),
+              TextButton(
+                onPressed: () async {
+                  var preset = await showDialog<_CommandsPreset>(
+                    context: context,
+                    builder: (context) => const _SelectPresetDialog(),
+                  );
+                  if (preset == null) return;
+                  preCommandsController.clear();
+                  preCommandsController.text = preset.preCountdownCommands;
+                  postCommandsController.clear();
+                  postCommandsController.text = preset.postCountdownCommands;
+                  setState(() {});
+                },
+                child: const Text("Use Preset"),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SelectPresetDialog extends StatefulWidget {
+  const _SelectPresetDialog();
+
+  @override
+  State<_SelectPresetDialog> createState() => _SelectPresetDialogState();
+}
+
+class _SelectPresetDialogState extends State<_SelectPresetDialog> {
+  bool loading = true;
+
+  _CommandsPreset? lastSavedPreset;
+
+  @override
+  void initState() {
+    super.initState();
+    setup();
+  }
+
+  Future<void> setup() async {
+    var sp = await SharedPreferences.getInstance();
+    var pre = sp.getString(spLastPreCountdownCommands) ?? "";
+    var post = sp.getString(spLastPostCountdownCommands) ?? "";
+
+    lastSavedPreset = _CommandsPreset(
+      name: "Last Saved",
+      preCountdownCommands: pre,
+      postCountdownCommands: post,
+    );
+    setState(() => loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<_CommandsPreset> presets = [..._commandsPresets];
+    if (lastSavedPreset != null) presets.add(lastSavedPreset!);
+
+    return AlertDialog(
+      title: const Text("Presets"),
+      content: SizedBox(
+        width: MediaQuery.sizeOf(context).width / 2,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: !loading
+                ? presets
+                      .map(
+                        (preset) => _PresetTile(
+                          preset: preset,
+                          onSelected: () => Navigator.pop(context, preset),
+                        ),
+                      )
+                      .toList()
+                : const [CircularProgressIndicator()],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PresetTile extends StatelessWidget {
+  const _PresetTile({required this.preset, required this.onSelected});
+
+  final _CommandsPreset preset;
+  final void Function() onSelected;
+
+  Widget commandsField({
+    required String labelText,
+    required String text,
+  }) => TextField(
+    controller: TextEditingController(text: text),
+    decoration: InputDecoration(
+      border: const OutlineInputBorder(),
+      alignLabelWithHint: true,
+      labelText: labelText,
+    ),
+    readOnly: true,
+    maxLines: null,
+  );
+
+  double getMaxLineWidth(String text, TextStyle style) {
+    return text
+        .split("\n")
+        .map((line) {
+          var painter = TextPainter(
+            text: TextSpan(text: line, style: style),
+            textDirection: TextDirection.ltr,
+          );
+          painter.layout(maxWidth: double.infinity);
+          return painter.width;
+        })
+        .reduce((max, el) => el > max ? el : max);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var preCountdownCommands = preset.preCountdownCommands.isNotEmpty
+        ? preset.preCountdownCommands
+        : "<none>";
+    var postCountdownCommands = preset.postCountdownCommands.isNotEmpty
+        ? preset.postCountdownCommands
+        : "<none>";
+
+    var textTheme = Theme.of(context).textTheme.bodyLarge!;
+    var maxWidth = max(
+      getMaxLineWidth(preCountdownCommands, textTheme),
+      getMaxLineWidth(postCountdownCommands, textTheme),
+    );
+
+    return ExpansionTile(
+      title: Text(preset.name),
+      expandedAlignment: Alignment.topLeft,
+      controlAffinity: ListTileControlAffinity.leading,
+      trailing: TextButton(
+        onPressed: onSelected,
+        child: const Text("Select"),
+      ),
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth + 40),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                commandsField(
+                  labelText: "Pre-Countdown Commands",
+                  text: preCountdownCommands,
+                ),
+                const SizedBox(height: 20),
+                commandsField(
+                  labelText: "Post-Countdown Commands",
+                  text: postCountdownCommands,
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

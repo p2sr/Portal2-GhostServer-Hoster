@@ -16,6 +16,9 @@ import 'package:url_launcher/url_launcher.dart';
 const spAuthTokenKey = "auth_token";
 const spAuthTokenExpiryKey = "auth_token_expiry";
 
+const spLastPreCountdownCommands = "last_pre_countdown_commands";
+const spLastPostCountdownCommands = "last_post_countdown_commands";
+
 Future<void> main() async {
   usePathUrlStrategy();
 
