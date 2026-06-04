@@ -55,6 +55,7 @@ export async function openDatabase() {
 
 export async function closeDatabase() {
 	if (!db) return;
+	logger.info({ source: "db", message: "Closing database" });
 	await db.close();
 	db = undefined;
 }
