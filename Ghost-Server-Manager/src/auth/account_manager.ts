@@ -110,40 +110,53 @@ export class User {
 
 export async function openDatabase() {
 	if (db) return;
-	db = await open({ filename: dbPath, driver: sqlite3Database });
+	while (!db) {
+		try {
+			logger.info({ source: "db", message: `Opening database at ${dbPath}` });
+			db = await open({ filename: dbPath, driver: sqlite3Database });
+			if (db) {
+				logger.info({ source: "db", message: `Database opened` });
+			} else {
+				logger.error({ source: "db", message: `Failed to open database, retrying...` });
+			}
 
-	// Create tables if necessary
-	await db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        email TEXT NOT NULL, 
-        passwordHash TEXT NOT NULL
-    );`);
+			// Create tables if necessary
+			await db.run(`CREATE TABLE IF NOT EXISTS users (
+				id INTEGER PRIMARY KEY AUTOINCREMENT, 
+				email TEXT NOT NULL, 
+				passwordHash TEXT NOT NULL
+			);`);
 
-	try {
-		await db.run(`ALTER TABLE users ADD role TEXT NOT NULL DEFAULT 'user'`);
+			try {
+				await db.run(`ALTER TABLE users ADD role TEXT NOT NULL DEFAULT 'user'`);
+			}
+			catch { }
+
+			await db.run(`CREATE TABLE IF NOT EXISTS auth_provider (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
+				provider TEXT NOT NULL,
+				access_token_json TEXT
+			);`);
+
+			await db.run(`CREATE TABLE IF NOT EXISTS auth_tokens (
+				id INTEGER PRIMARY KEY AUTOINCREMENT, 
+				user_id INTEGER NOT NULL, 
+				token TEXT NOT NULL, 
+				expirationDate NUMBER NOT NULL
+			);`);
+
+			await db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
+				token TEXT NOT NULL,
+				expirationDate NUMBER NOT NULL
+			);`);
+		} catch (error) {
+			logger.error({ source: "db", message: `Failed to open database: ${error}`});
+		}
+		await new Promise(resolve => setTimeout(resolve, 1000));
 	}
-	catch { }
-
-	await db.run(`CREATE TABLE IF NOT EXISTS auth_provider (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        provider TEXT NOT NULL,
-		access_token_json TEXT
-    );`);
-
-	await db.run(`CREATE TABLE IF NOT EXISTS auth_tokens (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        user_id INTEGER NOT NULL, 
-        token TEXT NOT NULL, 
-        expirationDate NUMBER NOT NULL
-    );`);
-
-	await db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		user_id INTEGER NOT NULL,
-		token TEXT NOT NULL,
-		expirationDate NUMBER NOT NULL
-	);`);
 }
 
 export async function closeDatabase() {
@@ -255,11 +268,19 @@ export async function getUser(authToken: string): Promise<User | undefined> {
 }
 
 export async function deleteUser(id: number) {
+	if (!db) {
+		logger.error({ source: "deleteUser", message: "Database not open!" });
+		return;
+	}
 	await db.run("DELETE FROM auth_tokens WHERE user_id = ?", [id]);
 	await db.run("DELETE FROM users WHERE id = ?", [id]);
 }
 
 export async function deleteAuthToken(token: string) {
+	if (!db) {
+		logger.error({ source: "deleteAuthToken", message: "Database not open!" });
+		return;
+	}
 	await db.run("DELETE FROM auth_tokens WHERE token = ?", [token]);
 }
 
@@ -306,12 +327,15 @@ export async function validatePasswordResetCredentials(token: string, email: str
 }
 
 export async function resetPassword(token: string, email: string, newPassword: string): Promise<boolean> {
-	if (!db) return false;
+	if (!db) {
+		logger.error({ source: "resetPassword", message: "Database not open!" });
+		return false;
+	}
 
 	await deleteExpiredPasswordResetTokens();
 
 	const tokenRow = await db.get("SELECT * FROM password_reset_tokens WHERE token = ?", [token]);
-	if (!tokenRow) return;
+	if (!tokenRow) return false;
 
 	const newPasswordHash = await getPasswordHash(newPassword);
 	await db.run(`UPDATE users SET passwordHash = '${newPasswordHash}' WHERE id = ?`, [tokenRow.user_id]);
@@ -321,15 +345,27 @@ export async function resetPassword(token: string, email: string, newPassword: s
 }
 
 async function hasEmailPasswordAuth(userId: number): Promise<boolean> {
-	return (await db?.get("SELECT passwordHash FROM users WHERE id = ?", userId)).passwordHash === "";
+	if (!db) {
+		logger.error({ source: "hasEmailPasswordAuth", message: "Database not open!" });
+		return false;
+	}
+	return (await db.get("SELECT passwordHash FROM users WHERE id = ?", userId)).passwordHash === "";
 }
 
 function deleteExpiredPasswordResetTokens() {
-	return db?.run("DELETE FROM password_reset_tokens WHERE expirationDate < ?", [Date.now()]);
+	if (!db) {
+		logger.error({ source: "deleteExpiredPasswordResetTokens", message: "Database not open!" });
+		return;
+	}
+	return db.run("DELETE FROM password_reset_tokens WHERE expirationDate < ?", [Date.now()]);
 }
 
 function deleteExpiredAuthTokens() {
-	return db?.run("DELETE FROM auth_tokens WHERE expirationDate < ?", [Date.now()]);
+	if (!db) {
+		logger.error({ source: "deleteExpiredAuthTokens", message: "Database not open!" });
+		return;
+	}
+	return db.run("DELETE FROM auth_tokens WHERE expirationDate < ?", [Date.now()]);
 }
 
 function getPasswordHash(password: string): Promise<string> {

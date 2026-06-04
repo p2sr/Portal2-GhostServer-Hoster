@@ -185,9 +185,15 @@ router.post("/resetPassword", async (req, res) => {
 		return;
 	}
 
-	if (!await db.resetPassword(req.body.token, req.body.email, req.body.newPassword)) {
-		logger.warn({ source: "resetPassword", message: "Password reset failed!" });
+	try {
+		if (!await db.resetPassword(req.body.token, req.body.email, req.body.newPassword)) {
+			logger.warn({ source: "resetPassword", message: "Password reset failed!" });
+			res.status(500).send();
+		}
+	} catch (error) {
+		logger.error({ source: "resetPassword", message: `Error in reset password route: ${error}` });
 		res.status(500).send();
+		return;
 	}
 
 	logger.info({ source: "resetPassword", message: "Reset password succeeded!" });

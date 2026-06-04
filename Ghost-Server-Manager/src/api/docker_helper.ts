@@ -100,8 +100,15 @@ export async function stopContainer(port: number, updateDatabase: boolean = true
         await axios.get(`http://localhost:${port}/stopServer`);
     } catch (error) {
         // race condition: server already stopped
+        logger.warn({ source: "stopContainer", message: `Failed to send stop command to container on port ${port}: ${error}` });
     }
-    if (updateDatabase) await db.removeContainersNotRunning();
+    if (updateDatabase) {
+        if (!db) {
+            logger.error({ source: "stopContainer", message: "Database not open!" });
+            return;
+        }
+        await db.removeContainersNotRunning();
+    }
 
     // const container = docker.getContainer(containerId);
     // await container.stop();
@@ -109,6 +116,10 @@ export async function stopContainer(port: number, updateDatabase: boolean = true
 }
 
 export async function deleteAllContainersFromUser(userId: number) {
+    if (!db) {
+        logger.error({ source: "deleteAllContainersFromUser", message: "Database not open!" });
+        return;
+    }
     await db.removeContainersNotRunning();
 
     const containers = await db.getContainersForUser(userId);
