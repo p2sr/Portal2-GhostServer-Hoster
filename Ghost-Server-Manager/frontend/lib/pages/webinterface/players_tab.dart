@@ -125,7 +125,10 @@ class _ConnectedPlayersTab extends StatelessWidget {
                       "Do you really want to remove admin permissions from ${player.name}?",
                       "Remove Admin",
                     );
-                    await Backend.removeAdminById(serverId, player.id);
+                    if (shouldRemoveAdmin) {
+                      await Backend.removeAdminById(serverId, player.id);
+                      update();
+                    }
                   } else {
                     var shouldMakeAdmin = await showConfirmationDialog(
                       context,
@@ -133,7 +136,10 @@ class _ConnectedPlayersTab extends StatelessWidget {
                       "Do you really want to give admin permissions to ${player.name}?",
                       "Make Admin",
                     );
-                    await Backend.makeAdminById(serverId, player.id);
+                    if (shouldMakeAdmin) {
+                      await Backend.makeAdminById(serverId, player.id);
+                      update();
+                    }
                   }
                   update();
                 },

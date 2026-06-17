@@ -92,6 +92,24 @@ app.get("/listPlayers/stream", async (req, res) => {
 	});
 });
 
+app.put("/makeAdmin", (req, res) => {
+	if (!("id" in req.body)) {
+		res.status(400).send("Please specify an id");
+		return;
+	}
+	ghostServer.promote(+req.body.id);
+	res.status(200).send(`Player with id ${req.body.id} is now an admin!`);
+});
+
+app.put("/removeAdmin", (req, res) => {
+	if (!("id" in req.body)) {
+		res.status(400).send("Please specify an id");
+		return;
+	}
+	ghostServer.demote(+req.body.id);
+	res.status(200).send(`Player with id ${req.body.id} is no longer an admin!`);
+});
+
 app.put("/disconnectPlayer", (req, res) => {
 	if ("id" in req.body) {
 		ghostServer.disconnectId(+req.body.id);

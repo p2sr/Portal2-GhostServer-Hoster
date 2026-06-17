@@ -217,6 +217,24 @@ router.put("/:id/banPlayer", async (req, res) => {
 	}
 });
 
+router.put("/:id/makeAdmin", async (req, res) => {
+	try {
+		await passthroughToContainer(req, res, "/makeAdmin", "PUT");
+	} catch (error) {
+		logger.error({ source: "makeAdmin", message: `Error in make admin route: ${error}` });
+		res.status(500).send("Internal server error");
+	}
+});
+
+router.put("/:id/removeAdmin", async (req, res) => {
+	try {
+		await passthroughToContainer(req, res, "/removeAdmin", "PUT");
+	} catch (error) {
+		logger.error({ source: "removeAdmin", message: `Error in remove admin route: ${error}` });
+		res.status(500).send("Internal server error");
+	}
+});
+
 router.put("/:id/disconnectPlayer", async (req, res) => {
 	try {
 		await passthroughToContainer(req, res, "/disconnectPlayer", "PUT");
