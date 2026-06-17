@@ -100,7 +100,7 @@ abstract class Player with _$Player {
     required int id,
     required String name,
     required bool isSpectator,
-    required bool isAdmin;
+    required bool isAdmin,
   }) = _Player;
 
   factory Player.fromJson(Json json) => _$PlayerFromJson(json);
