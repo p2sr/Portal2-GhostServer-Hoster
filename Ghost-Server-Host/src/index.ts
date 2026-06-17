@@ -48,6 +48,7 @@ app.get("/settings", (_, res) => {
 app.put("/settings", (req, res) => {
 	settings.updateFrom(req.body);
 
+	ghostServer.setCountdownInfo(settings.preCountdownCommands, settings.postCountdownCommands, settings.countdownDuration);
 	ghostServer.setAcceptingPlayers(settings.acceptingPlayers);
 	ghostServer.setAcceptingSpectators(settings.acceptingSpectators);
 

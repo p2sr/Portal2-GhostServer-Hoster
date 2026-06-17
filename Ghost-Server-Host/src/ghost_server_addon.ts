@@ -5,6 +5,7 @@ export class Client {
     id: number;
     name: string;
     isSpectator: boolean;
+    isAdmin: boolean;
 }
 
 export class Whitelist {
@@ -29,6 +30,8 @@ export const setCountdownInfo: (preCommands: string, postCommands: string, durat
 export const startCountdown: (preCommands: string, postCommands: string, duration: number) => undefined = addon.startCountdown;
 export const serverMessage: (message: string) => undefined = addon.serverMessage;
 
+export const promote: (id: number) => undefined = addon.promote;
+export const demote: (id: number) => undefined = addon.demote;
 export const disconnect: (name: string) => undefined = addon.disconnect;
 export const disconnectId: (id: number) => undefined = addon.disconnectId;
 

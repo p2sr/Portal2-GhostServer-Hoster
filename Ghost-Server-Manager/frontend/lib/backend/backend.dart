@@ -100,6 +100,7 @@ abstract class Player with _$Player {
     required int id,
     required String name,
     required bool isSpectator,
+    required bool isAdmin;
   }) = _Player;
 
   factory Player.fromJson(Json json) => _$PlayerFromJson(json);
@@ -341,6 +342,18 @@ class _Backend {
     );
     return parsePlayersJson(response.body);
   }
+
+  Future<void> makePlayerAdmin(int serverId, int playerId) => _put(
+    "$_baseServerUri/$serverId/makeAdmin",
+    body: {"id": playerId},
+    authenticated: true,
+  );
+
+  Future<void> removePlayerAdmin(int serverId, int playerId) => _put(
+    "$_baseServerUri/$serverId/removeAdmin",
+    body: {"id": playerId},
+    authenticated: true,
+  );
 
   Future<void> disconnectPlayerById(int serverId, int playerId) => _put(
     "$_baseServerUri/$serverId/disconnectPlayer",

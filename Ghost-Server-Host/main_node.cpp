@@ -82,6 +82,7 @@ NODE_FUNC(list)
         templ->Set(isolate, "id", v8::Number::New(isolate, client.ID));
         templ->Set(isolate, "name", v8::String::NewFromUtf8(isolate, client.name.c_str()).ToLocalChecked());
         templ->Set(isolate, "isSpectator", v8::Boolean::New(isolate, client.spectator));
+        templ->Set(isolate, "isAdmin", v8::Boolean::New(isolate, client.admin));
 
         result->Set(context, i, templ->NewInstance(context).ToLocalChecked()).Check();
     }
@@ -236,6 +237,34 @@ NODE_FUNC(serverMessage)
 
     auto message = toCppString(isolate, _message->ToString(context));
     g_network.ServerMessage(message.c_str());
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(promote) {
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsNumber()) return v8::Undefined(isolate);
+
+    auto clientId = args[0]->NumberValue(context).ToChecked();
+
+    scheduleServerThreadAndWait([=] {
+        auto cl = g_network.GetClientByID(clientId);
+        if (cl) cl->admin = true;
+    });
+
+    return v8::Undefined(isolate);
+}
+
+NODE_FUNC(demote) {
+    if (args.Length() != 1) return v8::Undefined(isolate);
+    if (!args[0]->IsNumber()) return v8::Undefined(isolate);
+
+    auto clientId = args[0]->NumberValue(context).ToChecked();
+
+    scheduleServerThreadAndWait([=] {
+        auto cl = g_network.GetClientByID(clientId);
+        if (cl) cl->admin = false;
+    });
 
     return v8::Undefined(isolate);
 }
@@ -447,6 +476,8 @@ void Initialize(v8::Local<v8::Object> exports)
     NODE_SET_METHOD(exports, "startCountdown", startCountdown);
     NODE_SET_METHOD(exports, "serverMessage", serverMessage);
 
+    NODE_SET_METHOD(exports, "promote", promote);
+    NODE_SET_METHOD(exports, "demote", demote);
     NODE_SET_METHOD(exports, "disconnect", disconnect);
     NODE_SET_METHOD(exports, "disconnectId", disconnectId);
 

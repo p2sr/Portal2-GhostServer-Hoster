@@ -223,7 +223,8 @@ Response body:
     {
         "id": "<ID of the player, assigned by the Ghost Server>",
         "name": "<player name>",
-        "isSpectator": <true if the player is a spectator, false otherwise>
+        "isSpectator": <true if the player is a spectator, false otherwise>,
+        "isAdmin": <true if the player is an admin, false otherwise>
     },
     ...
 ]
@@ -326,6 +327,42 @@ or
 #### Response
 
 status code 200 on success.
+
+### `/makeAdmin`
+
+- Promote a player to an admin.
+- Authentication: Yes
+- Method: PUT
+
+#### Request body
+
+```json
+{
+    "id": <ID of the player to be promoted to admin>
+}
+```
+
+#### Response
+
+Status code 200 on success.
+
+### `/removeAdmin`
+
+- Remove admin privileges from a player.
+- Authentication: Yes
+- Method: PUT
+
+#### Request body
+
+```json
+{
+    "id": <ID of the player to be removed from admin>
+}
+```
+
+#### Response
+
+Status code 200 on success.
 
 ### `/disconnectPlayer`
 

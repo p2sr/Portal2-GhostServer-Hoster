@@ -109,12 +109,37 @@ class _ConnectedPlayersTab extends StatelessWidget {
           ),
           subtitle: Text(
             "ID: ${player.id}"
-                "${player.isSpectator ? " • Spectator" : ""}",
+                "${player.isSpectator ? " • Spectator" : ""}"
+                "${player.isAdmin ? " • Admin" : ""}",
           ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              TextButton.icon(
+                onPressed: () async {
+                  if (player.isAdmin) {
+                    var shouldRemoveAdmin = await showConfirmationDialog(
+                      context,
+                      "Remove Admin",
+                      "Do you really want to remove admin permissions from ${player.name}?",
+                      "Remove Admin",
+                    );
+                    await Backend.removeAdminById(serverId, player.id);
+                  } else {
+                    var shouldMakeAdmin = await showConfirmationDialog(
+                      context,
+                      "Make Admin",
+                      "Do you really want to give admin permissions to ${player.name}?",
+                      "Make Admin",
+                    );
+                    await Backend.makeAdminById(serverId, player.id);
+                  }
+                  update();
+                },
+                icon: const Icon(Icons.verified_outlined),
+                label: const Text("Admin"),
+              ),
               TextButton.icon(
                 onPressed: () async {
                   var shouldKick = await showConfirmationDialog(
