@@ -168,7 +168,7 @@ NODE_FUNC(unregisterEventCallback)
     return v8::Undefined(isolate);
 }
 
-NOCE_FUNC(setCountdownInfo)
+NODE_FUNC(setCountdownInfo)
 {
     if (args.Length() != 3)
         return v8::Undefined(isolate);
