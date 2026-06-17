@@ -190,8 +190,8 @@ NODE_FUNC(setCountdownInfo)
     auto duration = _duration->NumberValue(context).ToChecked();
 
     g_network.ScheduleServerThread([=] {
-        g_network.preCommands = preCommands;
-        g_network.postCommands = postCommands;
+        g_network.countdownPreCommands = preCommands;
+        g_network.countdownPostCommands = postCommands;
         g_network.countdownDuration = duration;
     });
 
