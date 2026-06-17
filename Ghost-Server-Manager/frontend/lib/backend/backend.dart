@@ -343,13 +343,13 @@ class _Backend {
     return parsePlayersJson(response.body);
   }
 
-  Future<void> makePlayerAdmin(int serverId, int playerId) => _put(
+  Future<void> makeAdminById(int serverId, int playerId) => _put(
     "$_baseServerUri/$serverId/makeAdmin",
     body: {"id": playerId},
     authenticated: true,
   );
 
-  Future<void> removePlayerAdmin(int serverId, int playerId) => _put(
+  Future<void> removeAdminById(int serverId, int playerId) => _put(
     "$_baseServerUri/$serverId/removeAdmin",
     body: {"id": playerId},
     authenticated: true,
