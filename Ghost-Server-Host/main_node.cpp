@@ -168,6 +168,36 @@ NODE_FUNC(unregisterEventCallback)
     return v8::Undefined(isolate);
 }
 
+NOCE_FUNC(setCountdownInfo)
+{
+    if (args.Length() != 3)
+        return v8::Undefined(isolate);
+
+    auto _preCommands = args[0];
+    if (!_preCommands->IsString())
+        return v8::Undefined(isolate);
+
+    auto _postCommands = args[1];
+    if (!_postCommands->IsString())
+        return v8::Undefined(isolate);
+
+    auto _duration = args[2];
+    if (!_duration->IsNumber())
+        return v8::Undefined(isolate);
+
+    auto preCommands = toCppString(isolate, _preCommands->ToString(context));
+    auto postCommands = toCppString(isolate, _postCommands->ToString(context));
+    auto duration = _duration->NumberValue(context).ToChecked();
+
+    g_network.ScheduleServerThread([=] {
+        g_network.preCommands = preCommands;
+        g_network.postCommands = postCommands;
+        g_network.countdownDuration = duration;
+    });
+
+    return v8::Undefined(isolate);
+}
+
 NODE_FUNC(startCountdown)
 {
     if (args.Length() != 3)
@@ -413,6 +443,7 @@ void Initialize(v8::Local<v8::Object> exports)
     NODE_SET_METHOD(exports, "startServer", startServer);
     NODE_SET_METHOD(exports, "exit", exit);
 
+    NODE_SET_METHOD(exports, "setCountdownInfo", setCountdownInfo);
     NODE_SET_METHOD(exports, "startCountdown", startCountdown);
     NODE_SET_METHOD(exports, "serverMessage", serverMessage);
 

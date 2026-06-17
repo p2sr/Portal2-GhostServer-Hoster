@@ -27,6 +27,10 @@ app.use(bodyParser.json({ limit: '20mb' }))
 app.get("/startServer", (_, res) => {
 	ghostServer.startServer(+process.env.WS_PORT);
 	res.send("Ghost server started!");
+
+	ghostServer.registerEventCallback("get_countdown_info", () => {
+		ghostServer.setCountdownInfo(settings.preCountdownCommands, settings.postCountdownCommands, settings.countdownDuration);
+	});
 });
 
 app.get("/stopServer", (_, res) => {
