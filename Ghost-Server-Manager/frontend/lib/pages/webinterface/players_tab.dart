@@ -137,9 +137,10 @@ class _ConnectedPlayersTab extends StatelessWidget {
                   }
                   update();
                 },
-                icon: const Icon(Icons.verified_outlined),
+                icon: const Icon(Icons.perm_contact_calendar_outlined),
                 label: const Text("Admin"),
               ),
+              const SizedBox(width: 10),
               TextButton.icon(
                 onPressed: () async {
                   var shouldKick = await showConfirmationDialog(
