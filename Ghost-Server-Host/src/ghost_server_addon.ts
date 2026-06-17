@@ -25,6 +25,7 @@ export const unregisterEventCallback: (id: number) => number = addon.unregisterE
 export const startServer: (port: number) => string = addon.startServer;
 export const exit: () => string = addon.exit;
 
+export const setCountdownInfo: (preCommands: string, postCommands: string, duration: number) => undefined = addon.setCountdownInfo;
 export const startCountdown: (preCommands: string, postCommands: string, duration: number) => undefined = addon.startCountdown;
 export const serverMessage: (message: string) => undefined = addon.serverMessage;
 
